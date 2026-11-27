@@ -32,7 +32,6 @@ import {
 import {ScoreCalculator} from '@utils/ScoreCalculator';
 
 type HomeFilter = 'to-scan' | 'needs-review';
-type AnalyticsBreakdownMode = 'subject' | 'section';
 
 const SORT_OPTIONS: ReadonlyArray<{label: string; value: DashboardSortMode}> = [
   {label: 'Class / Section', value: 'section'},
@@ -54,8 +53,6 @@ export const DashboardScreen: React.FC = () => {
   const [sectionFilter, setSectionFilter] = useState<string>('ALL');
   const [subjectFilter, setSubjectFilter] = useState<string>('ALL');
   const [sortSheetOpen, setSortSheetOpen] = useState(false);
-  const [breakdownMode, setBreakdownMode] =
-    useState<AnalyticsBreakdownMode>('subject');
 
   const sortedSections = useMemo(
     () => DashboardSorter.sortSections(classes, exams, students),
@@ -134,16 +131,11 @@ export const DashboardScreen: React.FC = () => {
     () =>
       ScoreCalculator.summarizeClass(
         filteredStudentsForSummary.map(s => ({
-          earnedPoints: s.score,
-          maxPoints: s.total,
+          earnedPoints: s.score + (s.manualScore ?? 0),
+          maxPoints: s.total + (s.manualMax ?? 0),
         })),
       ),
     [filteredStudentsForSummary],
-  );
-
-  const sectionSummaries = useMemo(
-    () => DashboardSorter.summarizeBySection(students, classes, exams),
-    [students, classes, exams],
   );
 
   const resetFilters = () => {
@@ -187,7 +179,7 @@ export const DashboardScreen: React.FC = () => {
         style={styles.segment}
       />
 
-      {/* Single Clean Sort & Filter Row */}
+      {/* Minimal Borderless Sort & Filter Row */}
       {exams.length > 0 ? (
         <View style={styles.toolbarWrap}>
           <View style={styles.toolbarRow}>
@@ -198,23 +190,21 @@ export const DashboardScreen: React.FC = () => {
 
             <Pressable
               onPress={() => setSortSheetOpen(true)}
+              hitSlop={8}
               style={({pressed}) => [
-                styles.filterTrigger,
-                hasActiveFilters && styles.filterTriggerActive,
+                styles.sortLink,
                 pressed && styles.pressed,
               ]}>
-              <Text
-                style={[
-                  styles.filterTriggerText,
-                  hasActiveFilters && styles.filterTriggerTextActive,
-                ]}>
+              {hasActiveFilters ? <View style={styles.filterDot} /> : null}
+              <Text style={styles.sortLinkMuted}>Sort:</Text>
+              <Text style={styles.sortLinkValue}>
                 {sortMode === 'section'
                   ? 'Class'
                   : sortMode === 'subject'
                   ? 'Subject'
                   : 'Urgent'}
                 {hasActiveFilters
-                  ? ` · ${(activeSectionFilter !== 'ALL' ? 1 : 0) + (activeSubjectFilter !== 'ALL' ? 1 : 0)} filtered`
+                  ? ` (${(activeSectionFilter !== 'ALL' ? 1 : 0) + (activeSubjectFilter !== 'ALL' ? 1 : 0)})`
                   : ''}{' '}
                 ▾
               </Text>
@@ -373,81 +363,17 @@ export const DashboardScreen: React.FC = () => {
           </View>
         </NotchedCard>
 
-        {/* Breakdown Switcher: By Subject (A–Z) vs By Class / Section (Natural Order) */}
-        {sortedSubjects.length > 0 || sectionSummaries.length > 0 ? (
-          <View style={styles.breakdownBar}>
-            <Pressable
-              onPress={() => setBreakdownMode('subject')}
-              style={[
-                styles.breakdownTab,
-                breakdownMode === 'subject' && styles.breakdownTabActive,
-              ]}>
-              <Text
-                style={[
-                  styles.breakdownTabText,
-                  breakdownMode === 'subject' && styles.breakdownTabTextActive,
-                ]}>
-                By subject
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setBreakdownMode('section')}
-              style={[
-                styles.breakdownTab,
-                breakdownMode === 'section' && styles.breakdownTabActive,
-              ]}>
-              <Text
-                style={[
-                  styles.breakdownTabText,
-                  breakdownMode === 'section' && styles.breakdownTabTextActive,
-                ]}>
-                By class / section
-              </Text>
-            </Pressable>
+        {sortedSubjects.map(sub => (
+          <View key={sub.id} style={styles.subjectRow}>
+            <View style={styles.subjectLeft}>
+              <View
+                style={[styles.subjectDot, {backgroundColor: sub.color}]}
+              />
+              <Text style={styles.subjectName}>{sub.name}</Text>
+            </View>
+            <Text style={styles.subjectRate}>{sub.passingRate}%</Text>
           </View>
-        ) : null}
-
-        {breakdownMode === 'subject'
-          ? sortedSubjects.map(sub => (
-              <View key={sub.id} style={styles.subjectRow}>
-                <View style={styles.subjectLeft}>
-                  <View
-                    style={[styles.subjectDot, {backgroundColor: sub.color}]}
-                  />
-                  <Text style={styles.subjectName}>{sub.name}</Text>
-                </View>
-                <Text style={styles.subjectRate}>{sub.passingRate}%</Text>
-              </View>
-            ))
-          : sectionSummaries.map(row => (
-              <Pressable
-                key={row.section}
-                onPress={() =>
-                  setSectionFilter(
-                    activeSectionFilter.toLowerCase() ===
-                      row.section.toLowerCase()
-                      ? 'ALL'
-                      : row.section,
-                  )
-                }
-                style={styles.subjectRow}>
-                <View style={styles.subjectLeft}>
-                  <View
-                    style={[
-                      styles.subjectDot,
-                      {
-                        backgroundColor:
-                          row.passingRate >= 75 ? Colors.limeDeep : Colors.coral,
-                      },
-                    ]}
-                  />
-                  <Text style={styles.subjectName}>{row.section}</Text>
-                </View>
-                <Text style={styles.subjectRate}>
-                  {row.passingRate}% ({row.passedCount}/{row.totalStudents})
-                </Text>
-              </Pressable>
-            ))}
+        ))}
       </View>
 
       {/* Clean Sort & Filter Bottom Sheet */}
@@ -589,25 +515,28 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.inkMuted,
   },
-  filterTrigger: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: Radii.pill,
-    backgroundColor: Colors.surfaceWhite,
-    borderWidth: 1,
-    borderColor: Colors.hairlineLight,
+  sortLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
   },
-  filterTriggerActive: {
-    backgroundColor: Colors.inkPrimary,
-    borderColor: Colors.inkPrimary,
+  filterDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.coral,
   },
-  filterTriggerText: {
-    fontSize: 11,
-    fontWeight: '600',
+  sortLinkMuted: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: Colors.inkMuted,
+  },
+  sortLinkValue: {
+    fontSize: 12,
+    fontWeight: '700',
     color: Colors.inkPrimary,
-  },
-  filterTriggerTextActive: {
-    color: Colors.lime,
   },
   activeTagRow: {
     flexDirection: 'row',
@@ -819,28 +748,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: Colors.lime,
-  },
-  breakdownBar: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 6,
-  },
-  breakdownTab: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: Radii.pill,
-  },
-  breakdownTabActive: {
-    backgroundColor: Colors.surfaceMuted,
-  },
-  breakdownTabText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: Colors.inkMuted,
-  },
-  breakdownTabTextActive: {
-    color: Colors.inkPrimary,
-    fontWeight: '700',
   },
   subjectRow: {
     flexDirection: 'row',

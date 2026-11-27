@@ -237,14 +237,14 @@
       heroTab: 'to-scan',
       demoAligned: true,
       demoTiles: [
-        { num: 1, label: 'A', key: 'A', type: 'correct' },
-        { num: 2, label: 'B → C', key: 'C', type: 'wrong' },
-        { num: 3, label: 'B', key: 'B', type: 'correct' },
-        { num: 4, label: 'Blank', key: 'A', type: 'blank' },
-        { num: 5, label: 'A + C', key: 'C', type: 'flagged' },
-        { num: 6, label: 'D', key: 'D', type: 'correct' },
-        { num: 7, label: 'A', key: 'A', type: 'correct' },
-        { num: 8, label: 'D → A', key: 'A', type: 'wrong' }
+        { num: 1, mark: 'A', key: 'A', type: 'correct', caption: 'Correct' },
+        { num: 2, mark: 'B', key: 'C', type: 'wrong', caption: 'Key: C' },
+        { num: 3, mark: 'B', key: 'B', type: 'correct', caption: 'Correct' },
+        { num: 4, mark: '—', key: 'A', type: 'blank', caption: 'Blank' },
+        { num: 5, mark: 'A,C', key: 'C', type: 'flagged', caption: 'Double' },
+        { num: 6, mark: 'D', key: 'D', type: 'correct', caption: 'Correct' },
+        { num: 7, mark: 'A', key: 'A', type: 'correct', caption: 'Correct' },
+        { num: 8, mark: 'D', key: 'A', type: 'wrong', caption: 'Key: A' }
       ],
       demoScore: 38,
       openFaq: 0
@@ -792,28 +792,44 @@
               </div>
             </div>
 
-            <!-- Right: Manual Verification Tile Grid -->
+            <!-- Right: Manual Verification Tile Grid (Matches Mobile Review Screen) -->
             <div class="rounded-[24px] sm:rounded-[28px] bg-[#F5F5F2] text-[#111111] p-4 sm:p-8">
               <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
                 <span class="text-xs text-[#6E6E68]">Mathematics · Quarterly</span>
-                <span class="text-xs font-semibold text-[#5E52D6]">Tap flagged tiles</span>
+                <span class="text-xs font-semibold text-[#5E52D6]">Tap any card to verify</span>
               </div>
-              <div class="text-xl sm:text-2xl font-bold tracking-tight mb-4 sm:mb-5">
+              <div class="text-xl sm:text-2xl font-bold tracking-tight mb-3">
                 Juan Dela Cruz <span>${state.demoScore}</span> <span class="font-normal text-[#6E6E68]">/ 50</span>
               </div>
 
+              <!-- 4-State Legend (Matches Mobile ReviewScreen) -->
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] font-semibold text-[#4A4A45] mb-4">
+                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#C6F453] border border-[#111111]/20"></span>✓ Correct</span>
+                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#F67D56]"></span>✕ Wrong</span>
+                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#958BFF]"></span>! Needs check</span>
+                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#25262B]"></span>— Blank</span>
+              </div>
+
               <div class="grid grid-cols-2 min-[420px]:grid-cols-4 gap-2 sm:gap-2.5 mb-5 sm:mb-6">
-                ${state.demoTiles.map((t, i) => `
+                ${state.demoTiles.map((t, i) => {
+                  const glyph = t.type === 'correct' ? '✓' : t.type === 'wrong' ? '✕' : t.type === 'blank' ? '—' : '!';
+                  const badgeBg = t.type === 'blank' ? 'bg-white/15 text-white' : 'bg-[#111111]/12 text-[#111111]';
+                  const captionColor = t.type === 'blank' ? 'text-white/75' : 'text-[#111111]/75';
+                  return `
                   <button onclick="overrideDemoTile(${i})"
-                    class="rounded-2xl p-3 text-left min-h-[70px] sm:min-h-[76px] flex flex-col justify-between cursor-pointer transition-transform active:scale-95 ${tileColor(t)}">
-                    <span class="text-[11px] opacity-80">${t.num}</span>
-                    <span class="text-sm font-bold leading-tight">${t.label}</span>
-                  </button>
-                `).join('')}
+                    class="rounded-2xl p-3 text-left min-h-[84px] sm:min-h-[88px] flex flex-col justify-between cursor-pointer transition-transform active:scale-95 ${tileColor(t)}">
+                    <div class="flex items-center justify-between w-full">
+                      <span class="text-[11px] font-bold opacity-80">#${t.num}</span>
+                      <span class="w-5 h-5 rounded-full text-[10px] font-extrabold flex items-center justify-center ${badgeBg}">${glyph}</span>
+                    </div>
+                    <div class="text-lg font-extrabold leading-none tracking-tight my-1">${t.mark}</div>
+                    <span class="text-[10px] font-semibold ${captionColor}">${t.caption}</span>
+                  </button>`;
+                }).join('')}
               </div>
 
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#6E6E68] pt-4 hairline-t leading-relaxed">
-                <span>Unclear items (#4 Blank, #5 A + C) are flagged automatically</span>
+                <span>Unclear items (#4 Blank, #5 Double-shaded) are flagged automatically</span>
                 <button onclick="resetDemoTiles()" class="self-start sm:self-auto font-semibold text-[#111111] cursor-pointer underline underline-offset-2 shrink-0">Reset</button>
               </div>
             </div>
@@ -836,7 +852,8 @@
       const t = state.demoTiles[idx];
       if (t.type !== 'correct') {
         t.type = 'correct';
-        t.label = t.key;
+        t.mark = t.key;
+        t.caption = 'Correct';
         state.demoScore += 1;
         showToast(`Verified item #${t.num} as ${t.key} (+1 pt)`);
         const el = document.getElementById('demo');
@@ -847,14 +864,14 @@
     function resetDemoTiles() {
       state.demoScore = 38;
       state.demoTiles = [
-        { num: 1, label: 'A', key: 'A', type: 'correct' },
-        { num: 2, label: 'B → C', key: 'C', type: 'wrong' },
-        { num: 3, label: 'B', key: 'B', type: 'correct' },
-        { num: 4, label: 'Blank', key: 'A', type: 'blank' },
-        { num: 5, label: 'A + C', key: 'C', type: 'flagged' },
-        { num: 6, label: 'D', key: 'D', type: 'correct' },
-        { num: 7, label: 'A', key: 'A', type: 'correct' },
-        { num: 8, label: 'D → A', key: 'A', type: 'wrong' }
+        { num: 1, mark: 'A', key: 'A', type: 'correct', caption: 'Correct' },
+        { num: 2, mark: 'B', key: 'C', type: 'wrong', caption: 'Key: C' },
+        { num: 3, mark: 'B', key: 'B', type: 'correct', caption: 'Correct' },
+        { num: 4, mark: '—', key: 'A', type: 'blank', caption: 'Blank' },
+        { num: 5, mark: 'A,C', key: 'C', type: 'flagged', caption: 'Double' },
+        { num: 6, mark: 'D', key: 'D', type: 'correct', caption: 'Correct' },
+        { num: 7, mark: 'A', key: 'A', type: 'correct', caption: 'Correct' },
+        { num: 8, mark: 'D', key: 'A', type: 'wrong', caption: 'Key: A' }
       ];
       const el = document.getElementById('demo');
       if (el) el.innerHTML = renderDemoInner();
@@ -1030,10 +1047,10 @@
               <div class="flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
                 <div class="min-w-0">
                   <div class="text-xs text-[#C6F453] font-semibold">Release v1.0.0 · Android 10+ (ARM64)</div>
-                  <div class="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight mt-1 break-all sm:break-normal">app-release.apk</div>
+                  <div class="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight mt-1">ExamIQ</div>
                   <div class="text-xs text-[#94948E] mt-2 leading-relaxed">Includes OpenCV OMR engine, SQLite storage &amp; local PDF/Excel generator · ~28 MB</div>
                 </div>
-                <button onclick="showToast('Starting download: ExamIQ_v1.0.0_app-release.apk')"
+                <button onclick="showToast('Starting download: ExamIQ.apk')"
                   class="w-full md:w-auto px-7 py-3.5 rounded-full bg-[#C6F453] text-[#111111] text-sm font-bold cursor-pointer hover:opacity-95 transition-opacity shrink-0 text-center">
                   Download APK
                 </button>
