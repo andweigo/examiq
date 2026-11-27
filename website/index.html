@@ -1,47 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ExamIQ — Offline-First Mobile Prototype (25 Screens + Brand Kit)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ExamIQ — Offline-First Mobile Examination System</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-    body { margin: 0; background: #111111; color: #F5F5F2; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: #F5F5F2; color: #111111; }
 
-    /* Display Typography: Light over Bold */
-    .display-heading-sm {
-      font-size: 27px;
-      line-height: 1.12;
-      letter-spacing: -0.025em;
+    /* Display Typography: Light over Bold (Matches Mobile System) */
+    .display-hero {
+      font-size: clamp(2.4rem, 5.2vw, 4.25rem);
+      line-height: 1.04;
+      letter-spacing: -0.035em;
+      margin: 0;
+    }
+    .display-section {
+      font-size: clamp(1.85rem, 3.4vw, 2.75rem);
+      line-height: 1.08;
+      letter-spacing: -0.03em;
       margin: 0;
     }
     .display-light { display: block; font-weight: 300; }
     .display-bold { display: block; font-weight: 700; }
 
-    /* Phone Artboard (Exact 390 x 844 Ratio) */
-    .phone-frame {
-      width: 390px;
-      height: 844px;
-      border-radius: 36px;
-      overflow: hidden;
-      border: 1px solid #2A2A2A;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      flex-shrink: 0;
-    }
-
-    /* Notched Card Motif (matches provided screenshots) */
+    /* Signature Notched Card Motif (Direct Carry-over from Mobile App) */
     .notched-card {
       position: relative;
-      border-radius: 26px;
-      padding: 22px 20px 18px;
+      border-radius: 28px;
+      padding: 28px 26px 24px;
       overflow: hidden;
     }
     .notched-card::before {
@@ -50,457 +42,260 @@
       top: 0;
       left: 50%;
       transform: translateX(-50%);
-      width: 64px;
-      height: 11px;
+      width: 72px;
+      height: 12px;
       background: #F5F5F2;
-      border-bottom-left-radius: 10px;
-      border-bottom-right-radius: 10px;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
     }
-    .notched-card-dark-notch::before {
+    .notched-on-dark::before {
       background: #111111;
     }
 
     /* Hairline Dividers */
     .hairline-b { border-bottom: 1px solid #E4E4DE; }
-    .hairline-dark-b { border-bottom: 1px solid #232323; }
+    .hairline-t { border-top: 1px solid #E4E4DE; }
+    .hairline-dark-b { border-bottom: 1px solid #242424; }
 
-    /* Hide Scrollbars Inside Phone Frames */
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    /* Offset anchor scroll for sticky header */
+    section[id] { scroll-margin-top: 72px; }
+
+    /* Mini Phone Mockup Shell for Website Showcase */
+    .web-phone-shell {
+      width: 100%;
+      max-width: 340px;
+      border-radius: 34px;
+      overflow: hidden;
+      border: 1px solid #262626;
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-[#111111] text-[#F5F5F2]">
+<body class="min-h-screen flex flex-col bg-[#F5F5F2] text-[#111111]">
 
   <!-- ============================================================
-       TOP BAR — MINIMALIST SYSTEM-MATCHED LOGO MARK & VIEW CONTROLS
+       SITE NAVIGATION — MINIMALIST CAMERA-DOTS LOGO & SCREEN TABS
        ============================================================ -->
-  <header class="sticky top-0 z-40 bg-[#111111] border-b border-[#262626] px-4 sm:px-6 min-h-14 py-2 flex flex-wrap items-center justify-between gap-3 text-white">
-    <div class="flex items-center gap-3">
-      <!-- Minimalist Icon-Only Camera Logo Mark (No Title Text, Matches System Design) -->
-      <button onclick="setViewMode('brand')" class="flex items-center justify-center w-9 h-9 rounded-[11px] bg-[#1A1A1A] border border-[#2C2C2C] cursor-pointer hover:border-[#C6F453] transition-colors" title="View Minimalist Logo &amp; Character Poses">
-        <svg width="26" height="26" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M34 36H42C44.2 36 46 34.6 46.8 32.5L48.5 28C49.4 25.6 51.7 24 54.3 24H65.7C68.3 24 70.6 25.6 71.5 28L73.2 32.5C74 34.6 75.8 36 78 36H86C93.732 36 100 42.268 100 50V80C100 87.732 93.732 94 86 94H34C26.268 94 20 87.732 20 80V50C20 42.268 26.268 36 34 36Z" fill="#F5F5F2"></path>
-          <circle cx="88.5" cy="46.5" r="2.8" fill="#111111" fill-opacity="0.35"></circle>
-          <circle cx="48" cy="54" r="7.5" stroke="#111111" stroke-width="4.5"></circle>
-          <circle cx="72" cy="54" r="7.5" fill="#111111"></circle>
-          <circle cx="48" cy="76" r="7.5" fill="#C6F453" stroke="#111111" stroke-width="4.5"></circle>
-          <circle cx="72" cy="76" r="7.5" stroke="#111111" stroke-width="4.5"></circle>
+  <header class="sticky top-0 z-40 bg-[#F5F5F2]/95 backdrop-blur-sm border-b border-[#E4E4DE]">
+    <div class="max-w-[1200px] mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-4">
+      <!-- Brand Mark -->
+      <button onclick="scrollToSection('overview')" class="flex items-center gap-2.5 cursor-pointer bg-transparent border-0 p-0">
+        <svg width="32" height="32" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="4" width="112" height="112" rx="28" fill="#111111"/>
+          <path d="M34 36H42C44.2 36 46 34.6 46.8 32.5L48.5 28C49.4 25.6 51.7 24 54.3 24H65.7C68.3 24 70.6 25.6 71.5 28L73.2 32.5C74 34.6 75.8 36 78 36H86C93.732 36 100 42.268 100 50V80C100 87.732 93.732 94 86 94H34C26.268 94 20 87.732 20 80V50C20 42.268 26.268 36 34 36Z" fill="#F5F5F2"/>
+          <circle cx="88.5" cy="46.5" r="2.8" fill="#111111" fill-opacity="0.35"/>
+          <circle cx="48" cy="54" r="7.5" stroke="#111111" stroke-width="4.5"/>
+          <circle cx="72" cy="54" r="7.5" fill="#111111"/>
+          <circle cx="48" cy="76" r="7.5" fill="#C6F453" stroke="#111111" stroke-width="4.5"/>
+          <circle cx="72" cy="76" r="7.5" stroke="#111111" stroke-width="4.5"/>
         </svg>
+        <span class="text-base font-bold tracking-tight text-[#111111]">ExamIQ</span>
       </button>
-      <span class="hidden md:inline-block text-xs text-[#8E8E88] pl-3 border-l border-[#262626]">25 Offline-First Mobile Screens · SQLite + OpenCV OMR</span>
-    </div>
 
-    <!-- Mode Switcher & Export Actions -->
-    <div class="flex flex-wrap items-center gap-2">
-      <div class="flex items-center bg-[#1C1C1C] p-1 rounded-full border border-[#262626]">
-        <button id="btn-mode-gallery" onclick="setViewMode('gallery')" class="px-3.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors bg-[#C6F453] text-[#111111]">
-          All Screens (25)
+      <!-- Desktop Section Navigation (One-Pager Scroll Links) -->
+      <nav class="hidden md:flex items-center bg-[#EAEAE5] p-1 rounded-full">
+        <button id="nav-overview" onclick="scrollToSection('overview')" class="px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-colors">Overview</button>
+        <button id="nav-workflow" onclick="scrollToSection('workflow')" class="px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-colors">How it works</button>
+        <button id="nav-alignment" onclick="scrollToSection('alignment')" class="px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-colors">OMR &amp; Alignment</button>
+        <button id="nav-download" onclick="scrollToSection('download')" class="px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-colors">Download</button>
+        <button id="nav-faq" onclick="scrollToSection('faq')" class="px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-colors">FAQ</button>
+      </nav>
+
+      <!-- Primary CTA + Mobile Menu Toggle -->
+      <div class="flex items-center gap-2">
+        <button onclick="scrollToSection('download')" class="px-4 py-2 rounded-full bg-[#111111] text-white text-xs font-semibold cursor-pointer hover:opacity-90 transition-opacity">
+          Get Android APK
         </button>
-        <button id="btn-mode-interactive" onclick="setViewMode('interactive')" class="px-3.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors text-[#94948E] hover:text-white">
-          Interactive
-        </button>
-        <button id="btn-mode-brand" onclick="setViewMode('brand')" class="px-3.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors text-[#94948E] hover:text-white">
-          Logo &amp; Poses (6)
+        <button onclick="toggleMobileMenu()" class="md:hidden w-9 h-9 rounded-full bg-[#EAEAE5] flex items-center justify-center cursor-pointer" aria-label="Toggle menu">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/></svg>
         </button>
       </div>
+    </div>
 
-      <button id="btn-export-zip" onclick="downloadAllScreensZip()" class="px-4 py-1.5 rounded-full bg-[#C6F453] text-[#111111] text-xs font-bold cursor-pointer inline-flex items-center gap-1.5">
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-        <span id="export-zip-label">Download All (.zip)</span>
-      </button>
-
-      <button onclick="downloadHtmlBundle()" class="px-3.5 py-1.5 rounded-full bg-[#1C1C1C] border border-[#333333] text-white text-xs font-semibold cursor-pointer hover:border-[#C6F453]">
-        Save HTML
-      </button>
+    <!-- Mobile Nav Drawer -->
+    <div id="mobile-nav" class="hidden md:hidden border-t border-[#E4E4DE] bg-[#F5F5F2] px-5 py-3">
+      <div class="flex flex-wrap gap-2">
+        <button onclick="scrollToSection('overview'); toggleMobileMenu(false);" class="px-3.5 py-1.5 rounded-full bg-white border border-[#E4E4DE] text-xs font-semibold cursor-pointer">Overview</button>
+        <button onclick="scrollToSection('workflow'); toggleMobileMenu(false);" class="px-3.5 py-1.5 rounded-full bg-white border border-[#E4E4DE] text-xs font-semibold cursor-pointer">How it works</button>
+        <button onclick="scrollToSection('alignment'); toggleMobileMenu(false);" class="px-3.5 py-1.5 rounded-full bg-white border border-[#E4E4DE] text-xs font-semibold cursor-pointer">OMR &amp; Alignment</button>
+        <button onclick="scrollToSection('download'); toggleMobileMenu(false);" class="px-3.5 py-1.5 rounded-full bg-white border border-[#E4E4DE] text-xs font-semibold cursor-pointer">Download</button>
+        <button onclick="scrollToSection('faq'); toggleMobileMenu(false);" class="px-3.5 py-1.5 rounded-full bg-white border border-[#E4E4DE] text-xs font-semibold cursor-pointer">FAQ</button>
+      </div>
     </div>
   </header>
 
   <!-- ============================================================
-       MAIN WORKSPACE (GALLERY / INTERACTIVE / BRAND ASSETS)
+       MAIN ONE-PAGER CONTAINER (ALL SECTIONS STACKED)
        ============================================================ -->
-  <main class="flex-1 px-4 sm:px-6 py-6 flex flex-col items-center w-full">
+  <main id="page-root" class="flex-1 w-full"></main>
 
-    <!-- 1. ALL-SCREENS BUNDLE GALLERY -->
-    <section id="gallery-workspace" class="w-full max-w-[1680px]">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-6 pb-4 border-b border-[#262626]">
-        <div>
-          <div class="text-sm font-bold text-white">All 25 Offline-First Mobile Screens</div>
-          <div class="text-xs text-[#8E8E88] mt-0.5">Exact original flat system design including all 3 Onboarding screens, Teacher Registration, restored Exam Builder, Answer Key, User Profile, Exam Paper, and OpenCV Alignment.</div>
-        </div>
-        <div class="text-xs text-[#94948E]">390 × 844 px · Local SQLite + OpenCV</div>
-      </div>
-
-      <div id="gallery-grid" class="flex flex-wrap justify-center gap-x-8 gap-y-10 pb-12"></div>
-    </section>
-
-    <!-- 2. INTERACTIVE SINGLE-PHONE WORKSPACE -->
-    <section id="interactive-workspace" class="hidden w-full max-w-[1160px] flex flex-col items-center">
-      <div id="jump-strip" class="flex flex-wrap justify-center gap-1.5 mb-6 max-w-[960px]"></div>
-      <div id="interactive-phone" class="phone-frame bg-[#F5F5F2] text-[#111111]"></div>
-    </section>
-
-    <!-- 3. MINIMALIST LOGO & SEPARATE CHARACTER POSES WORKSPACE -->
-    <section id="brand-workspace" class="w-full max-w-[1280px] pb-16 hidden">
-      <!-- Minimalist Logo Section -->
-      <div class="mb-10 pb-8 border-b border-[#262626]">
-        <div class="flex flex-wrap items-end justify-between gap-2 mb-6">
+  <!-- ============================================================
+       SITE FOOTER — CLEAN DARK INK SURFACE
+       ============================================================ -->
+  <footer class="bg-[#111111] text-[#F5F5F2] mt-auto">
+    <div class="max-w-[1200px] mx-auto px-5 sm:px-8 py-12">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 hairline-dark-b">
+        <div class="flex items-center gap-3">
+          <svg width="32" height="32" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="4" width="112" height="112" rx="28" fill="#1C1C1C"/>
+            <path d="M34 36H42C44.2 36 46 34.6 46.8 32.5L48.5 28C49.4 25.6 51.7 24 54.3 24H65.7C68.3 24 70.6 25.6 71.5 28L73.2 32.5C74 34.6 75.8 36 78 36H86C93.732 36 100 42.268 100 50V80C100 87.732 93.732 94 86 94H34C26.268 94 20 87.732 20 80V50C20 42.268 26.268 36 34 36Z" fill="#F5F5F2"/>
+            <circle cx="48" cy="54" r="7.5" stroke="#111111" stroke-width="4.5"/>
+            <circle cx="72" cy="54" r="7.5" fill="#111111"/>
+            <circle cx="48" cy="76" r="7.5" fill="#C6F453" stroke="#111111" stroke-width="4.5"/>
+            <circle cx="72" cy="76" r="7.5" stroke="#111111" stroke-width="4.5"/>
+          </svg>
           <div>
-            <div class="text-base font-bold text-white">Minimalist System Logo (Icon-Only)</div>
-            <div class="text-xs text-[#8E8E88] mt-1">Minimalist camera silhouette with the 2×2 shaded OMR bubble dots inside. Zero generic gradients or clutter.</div>
+            <div class="text-sm font-bold">ExamIQ</div>
+            <div class="text-xs text-[#8E8E88]">Offline-first mobile examination management &amp; OMR checking.</div>
           </div>
         </div>
-        <div id="logo-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-5"></div>
-      </div>
 
-      <!-- Separate Character Poses Section -->
-      <div>
-        <div class="flex flex-wrap items-end justify-between gap-2 mb-6">
-          <div>
-            <div class="text-base font-bold text-white">Dashboard Owl Character — 6 Separate Action Poses</div>
-            <div class="text-xs text-[#8E8E88] mt-1">Same soft 3D Dashboard Owl style with live SVG animations for classroom, scanning &amp; empty-state actions.</div>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="flex items-center bg-[#1C1C1C] p-1 rounded-full border border-[#262626]">
-              <button id="btn-owl-anim-on" onclick="state.animateOwl=true; render();" class="px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors bg-[#C6F453] text-[#111111]">Animated</button>
-              <button id="btn-owl-anim-off" onclick="state.animateOwl=false; render();" class="px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors text-[#94948E] hover:text-white">Static</button>
-            </div>
-            <button onclick="downloadAllBrandZip()" class="px-4 py-2 rounded-full bg-[#C6F453] text-[#111111] text-xs font-bold cursor-pointer">
-              Download All Poses + Logo (.zip)
-            </button>
-          </div>
+        <div class="flex flex-wrap items-center gap-5 text-xs text-[#A1A19A]">
+          <button onclick="scrollToSection('overview')" class="hover:text-white cursor-pointer">Overview</button>
+          <button onclick="scrollToSection('workflow')" class="hover:text-white cursor-pointer">How it works</button>
+          <button onclick="scrollToSection('alignment')" class="hover:text-white cursor-pointer">OMR &amp; Alignment</button>
+          <button onclick="scrollToSection('download')" class="hover:text-white cursor-pointer">Download APK</button>
+          <button onclick="scrollToSection('faq')" class="hover:text-white cursor-pointer">FAQ</button>
         </div>
-        <div id="poses-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
       </div>
-    </section>
-  </main>
 
-  <!-- Non-blocking Toast Banner -->
-  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-[#1C1C1C] border border-[#333333] text-white text-xs font-medium px-4 py-2.5 rounded-full opacity-0 pointer-events-none transition-opacity duration-200"></div>
+      <div class="pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-[#8E8E88]">
+        <span>Built for Android · React Native CLI · OpenCV · SQLite</span>
+        <span>© 2026 ExamIQ. All records stay on the teacher's device.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Non-blocking Toast -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-[#111111] border border-[#2C2C2C] text-white text-xs font-medium px-4 py-2.5 rounded-full opacity-0 pointer-events-none transition-opacity duration-200"></div>
 
   <script>
     /* ============================================================
-       APPLICATION STATE (100% LOCAL / OFFLINE-FIRST)
+       WEBSITE STATE
        ============================================================ */
     const state = {
-      viewMode: 'gallery', // 'gallery' | 'interactive' | 'brand'
-      screen: 'home',
-      animateOwl: true,
-      homeTab: 'to-scan', // 'to-scan' | 'needs-review'
-      examFilter: 'All',
-      resultsTab: 'analytics', // 'analytics' | 'students'
-      selectedExamId: 'ex-math-q1',
-      selectedGenStudentId: '2026-0001',
-      flashOn: false,
-      pointsPerItem: 1,
-      alignmentView: 'aligned', // 'raw' | 'aligned'
-      editingProfile: false,
-
-      regForm: {
-        name: 'Elena Reyes',
-        school: 'Calapan National High School',
-        role: 'Mathematics & Science Teacher',
-        pin: '2026'
-      },
-
-      teacher: {
-        name: 'Elena Reyes',
-        initials: 'ER',
-        role: 'Mathematics & Science Teacher',
-        school: 'Calapan National High School',
-        email: 'elena.reyes@school.local',
-        deviceId: 'Pixel 7a · SQLite v3.45'
-      },
-
-      settings: {
-        autoCapture: true,
-        beepOnScan: true,
-        flagDoubleShade: true,
-        autoLocalBackup: true,
-        lowScoreAlerts: true,
-        omrSensitivity: 'Balanced'
-      },
-
-      exams: [
-        { id: 'ex-math-q1', subject: 'Mathematics', term: 'Quarterly', section: 'Grade 10 Rizal', date: 'Nov 24', scanned: 38, total: 40, color: '#958BFF', items: 50, passingRate: 78 },
-        { id: 'ex-sci-q3', subject: 'Science', term: 'Quiz 3', section: 'Grade 10 Rizal', date: 'Nov 20', scanned: 40, total: 40, color: '#C6F453', items: 40, passingRate: 92 },
-        { id: 'ex-eng-mid', subject: 'English', term: 'Midterm', section: 'Grade 10 Bonifacio', date: 'Nov 28', scanned: 0, total: 38, color: '#F67D56', items: 50, passingRate: 81 },
-        { id: 'ex-math-pre', subject: 'Mathematics', term: 'Pre-test', section: 'Grade 10 Rizal', date: 'Nov 12', scanned: 40, total: 40, color: '#6BD4E6', items: 30, passingRate: 85 }
+      activeSection: 'overview',
+      demoAligned: true,
+      demoTiles: [
+        { num: 1, label: 'A', key: 'A', type: 'correct' },
+        { num: 2, label: 'B → C', key: 'C', type: 'wrong' },
+        { num: 3, label: 'B', key: 'B', type: 'correct' },
+        { num: 4, label: 'Blank', key: 'A', type: 'blank' },
+        { num: 5, label: 'A + C', key: 'C', type: 'flagged' },
+        { num: 6, label: 'D', key: 'D', type: 'correct' },
+        { num: 7, label: 'A', key: 'A', type: 'correct' },
+        { num: 8, label: 'D → A', key: 'A', type: 'wrong' }
       ],
-
-      students: [
-        { id: '2026-0001', name: 'Juan Dela Cruz', section: 'Grade 10 Rizal', score: 38, total: 50, status: 'Review' },
-        { id: '2026-0002', name: 'Maria Santos', section: 'Grade 10 Rizal', score: 47, total: 50, status: 'Checked' },
-        { id: '2026-0003', name: 'Pedro Reyes', section: 'Grade 10 Rizal', score: 31, total: 50, status: 'Failed, retry' },
-        { id: '2026-0004', name: 'Ana Villanueva', section: 'Grade 10 Bonifacio', score: 42, total: 50, status: 'Saved' },
-        { id: '2026-0005', name: 'Luis Garcia', section: 'Grade 10 Bonifacio', score: 34, total: 50, status: 'Saved' },
-        { id: '2026-0006', name: 'Sofia Mendoza', section: 'Grade 10 Rizal', score: 45, total: 50, status: 'Checked' }
-      ],
-
-      classes: [
-        { id: 'cls-1', grade: 'Grade 10', section: 'Rizal', students: 40, advisor: 'Elena Reyes' },
-        { id: 'cls-2', grade: 'Grade 10', section: 'Bonifacio', students: 38, advisor: 'Elena Reyes' },
-        { id: 'cls-3', grade: 'Grade 9', section: 'Mabini', students: 40, advisor: 'Marco Dizon' }
-      ],
-
-      subjects: [
-        { id: 'sub-1', name: 'Mathematics', code: 'MATH-10', sections: '2 sections', passingRate: 78, color: '#958BFF' },
-        { id: 'sub-2', name: 'Science', code: 'SCI-10', sections: '1 section', passingRate: 92, color: '#C6F453' },
-        { id: 'sub-3', name: 'English', code: 'ENG-10', sections: '1 section', passingRate: 81, color: '#F67D56' }
-      ],
-
-      questions: [
-        { num: 1, text: 'Solve for x: 2x + 7 = 19', choices: ['6', '7', '8', '5'], answer: 'A' },
-        { num: 2, text: 'What is the slope of y = 3x - 4?', choices: ['-4', '1/3', '3', '-3'], answer: 'C' },
-        { num: 3, text: 'Factor completely: x² - 9', choices: ['(x-3)²', '(x-3)(x+3)', '(x+3)²', 'x(x-9)'], answer: 'B' },
-        { num: 4, text: 'Value of sin(30°) in exact form', choices: ['1/2', '√3/2', '1', '√2/2'], answer: 'A' }
-      ],
-
-      answerKey: ['A', 'C', 'B', 'A', 'C', 'D', 'A', 'A', 'B', 'D', 'C', 'A', 'B', 'C', 'D', 'A'],
-
-      reviewTiles: [
-        { num: 1, detected: 'A', key: 'A', type: 'correct', label: 'A' },
-        { num: 2, detected: 'B', key: 'C', type: 'wrong', label: 'B → C' },
-        { num: 3, detected: 'B', key: 'B', type: 'correct', label: 'B' },
-        { num: 4, detected: 'Blank', key: 'A', type: 'blank', label: 'Blank' },
-        { num: 5, detected: 'A + C', key: 'C', type: 'flagged', label: 'A + C' },
-        { num: 6, detected: 'D', key: 'D', type: 'correct', label: 'D' },
-        { num: 7, detected: 'A', key: 'A', type: 'correct', label: 'A' },
-        { num: 8, detected: 'D', key: 'A', type: 'wrong', label: 'D → A' }
-      ],
-
-      scanHistory: [
-        { name: 'Juan Dela Cruz', meta: 'Mathematics · 9:41', status: 'Review', color: '#958BFF' },
-        { name: 'Maria Santos', meta: 'Mathematics · 9:38', status: 'Checked', color: '#C6F453' },
-        { name: 'Pedro Reyes', meta: 'Science · 9:30', status: 'Failed, retry', color: '#F67D56' },
-        { name: 'Ana Villanueva', meta: 'Mathematics · 9:27', status: 'Saved locally', color: '#FFFFFF' },
-        { name: 'Luis Garcia', meta: 'Mathematics · 9:24', status: 'Saved locally', color: '#FFFFFF' }
-      ],
-
-      notifications: [
-        { id: 1, title: '2 answers flagged on Juan Dela Cruz', time: '9:41 AM', unread: true },
-        { id: 2, title: 'SQLite backup saved to Downloads', time: 'Yesterday', unread: true },
-        { id: 3, title: 'Science Quiz 3 reached 92% passing', time: 'Nov 20', unread: false }
-      ]
+      demoScore: 38,
+      openFaq: 0
     };
 
-    /* ============================================================
-       TOAST & NAVIGATION HELPERS
-       ============================================================ */
     let toastTimer = null;
     function showToast(msg) {
       const el = document.getElementById('toast');
-      if (!el) return;
       el.textContent = msg;
       el.classList.remove('opacity-0');
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => el.classList.add('opacity-0'), 2400);
     }
 
-    function go(screen) {
-      state.screen = screen;
-      if (state.viewMode !== 'interactive') state.viewMode = 'interactive';
-      render();
+    function scrollToSection(sectionId) {
+      state.activeSection = sectionId;
+      updateNavHighlight();
+      const target = document.getElementById(sectionId);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
 
-    function setViewMode(mode) {
-      state.viewMode = mode;
-      render();
+    function updateNavHighlight() {
+      const sections = ['overview', 'workflow', 'alignment', 'download', 'faq'];
+      sections.forEach(id => {
+        const btn = document.getElementById(`nav-${id}`);
+        if (!btn) return;
+        const active = state.activeSection === id;
+        btn.className = `px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-colors ${active ? 'bg-[#111111] text-white' : 'text-[#4A4A45] hover:text-[#111111]'}`;
+      });
     }
 
-    function completeRegistration() {
-      const name = (state.regForm.name || '').trim() || 'Elena Reyes';
-      const parts = name.split(/\s+/);
-      state.teacher.name = name;
-      state.teacher.initials = (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
-      state.teacher.school = (state.regForm.school || '').trim() || 'Calapan National High School';
-      state.teacher.role = (state.regForm.role || '').trim() || 'Mathematics & Science Teacher';
-      showToast('Local SQLite profile created on device');
-      go('home');
+    function handleScrollSpy() {
+      const sections = ['overview', 'workflow', 'alignment', 'download', 'faq'];
+      let current = 'overview';
+      const offset = 140;
+      for (const id of sections) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= offset) {
+          current = id;
+        }
+      }
+      if (current !== state.activeSection) {
+        state.activeSection = current;
+        updateNavHighlight();
+      }
     }
 
-    /* ============================================================
-       MINIMALIST SYSTEM-MATCHED LOGO GENERATOR (CAMERA + 2x2 DOTS)
-       ============================================================ */
-    function renderMinimalLogoSvg(variant = 'dark', size = 128) {
-      const bg = variant === 'dark' ? '#111111' : (variant === 'lime' ? '#C6F453' : '#F5F5F2');
-      const body = variant === 'dark' ? '#F5F5F2' : '#111111';
-      const stroke = variant === 'dark' ? '#111111' : '#F5F5F2';
-      const accent = variant === 'lime' ? '#958BFF' : '#C6F453';
-
-      return `
-        <svg width="${size}" height="${size}" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="4" y="4" width="112" height="112" rx="28" fill="${bg}"/>
-          <path d="M34 36H42C44.2 36 46 34.6 46.8 32.5L48.5 28C49.4 25.6 51.7 24 54.3 24H65.7C68.3 24 70.6 25.6 71.5 28L73.2 32.5C74 34.6 75.8 36 78 36H86C93.732 36 100 42.268 100 50V80C100 87.732 93.732 94 86 94H34C26.268 94 20 87.732 20 80V50C20 42.268 26.268 36 34 36Z" fill="${body}"/>
-          <circle cx="88.5" cy="46.5" r="2.8" fill="${stroke}" fill-opacity="0.35"/>
-          <circle cx="48" cy="54" r="7.5" stroke="${stroke}" stroke-width="4.2"/>
-          <circle cx="72" cy="54" r="7.5" fill="${stroke}"/>
-          <circle cx="48" cy="76" r="7.5" fill="${accent}" stroke="${stroke}" stroke-width="4.2"/>
-          <circle cx="72" cy="76" r="7.5" stroke="${stroke}" stroke-width="4.2"/>
-        </svg>
-      `;
+    function toggleMobileMenu(force) {
+      const menu = document.getElementById('mobile-nav');
+      if (typeof force === 'boolean') menu.classList.toggle('hidden', !force);
+      else menu.classList.toggle('hidden');
     }
 
     /* ============================================================
-       DASHBOARD 3D OWL CHARACTER — 6 SEPARATE ANIMATED ACTION POSES
+       ANIMATED DASHBOARD OWL CHARACTER (SHARED ACROSS WEBSITE)
        ============================================================ */
-    function renderOwlPoseSvg(pose = 'welcome', size = 72, uid = 'owl', animated = state.animateOwl) {
-      const animStyle = animated ? `
+    function renderOwlSvg(pose = 'welcome', size = 120, uid = 'web') {
+      const animStyle = `
         <style>
           .owl-bob-${uid} { transform-box: fill-box; transform-origin: center bottom; animation: owlBob-${uid} 2.8s ease-in-out infinite; }
           .owl-shadow-${uid} { transform-box: fill-box; transform-origin: center; animation: owlShadow-${uid} 2.8s ease-in-out infinite; }
           .owl-blink-${uid} { transform-box: fill-box; transform-origin: center; animation: owlBlink-${uid} 4.2s ease-in-out infinite; }
-          .owl-tuft-${uid} { transform-box: fill-box; transform-origin: bottom center; animation: owlTuft-${uid} 3.2s ease-in-out infinite; }
           .owl-wave-${uid} { transform-box: fill-box; transform-origin: left center; animation: owlWave-${uid} 1.8s ease-in-out infinite; }
           .owl-beam-${uid} { transform-box: fill-box; transform-origin: top center; animation: owlBeam-${uid} 1.9s ease-in-out infinite; }
-          .owl-led-${uid} { animation: owlLed-${uid} 1.1s steps(2, start) infinite; }
           .owl-pencil-${uid} { transform-box: fill-box; transform-origin: bottom left; animation: owlPencil-${uid} 1.3s ease-in-out infinite; }
           .owl-magnify-${uid} { transform-box: fill-box; transform-origin: bottom right; animation: owlMagnify-${uid} 2.6s ease-in-out infinite; }
-          .owl-qmark-${uid} { transform-box: fill-box; transform-origin: center; animation: owlFloat-${uid} 2s ease-in-out infinite; }
-          .owl-wing-l-${uid} { transform-box: fill-box; transform-origin: right bottom; animation: owlCheerL-${uid} 1.2s ease-in-out infinite; }
-          .owl-wing-r-${uid} { transform-box: fill-box; transform-origin: left bottom; animation: owlCheerR-${uid} 1.2s ease-in-out infinite; }
-          .owl-badge-${uid} { transform-box: fill-box; transform-origin: center; animation: owlPop-${uid} 1.8s ease-in-out infinite; }
           .owl-shrug-${uid} { transform-box: fill-box; transform-origin: center; animation: owlShrug-${uid} 2.8s ease-in-out infinite; }
-          .owl-dots-${uid} { transform-box: fill-box; transform-origin: center; animation: owlFloat-${uid} 2.4s ease-in-out infinite; }
-
-          @keyframes owlBob-${uid} {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(${pose === 'celebrate' ? '-5px' : '-2.5px'}); }
-          }
-          @keyframes owlShadow-${uid} {
-            0%, 100% { transform: scaleX(1); opacity: 1; }
-            50% { transform: scaleX(${pose === 'celebrate' ? '0.84' : '0.92'}); opacity: 0.72; }
-          }
-          @keyframes owlBlink-${uid} {
-            0%, 44%, 48%, 94%, 98%, 100% { transform: scaleY(1); }
-            46%, 96% { transform: scaleY(0.08); }
-          }
-          @keyframes owlTuft-${uid} {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(5deg); }
-          }
-          @keyframes owlWave-${uid} {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(-10deg) translateY(-1.5px); }
-          }
-          @keyframes owlBeam-${uid} {
-            0%, 100% { opacity: 0.92; transform: scaleX(1); }
-            50% { opacity: 0.42; transform: scaleX(0.9); }
-          }
-          @keyframes owlLed-${uid} {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.25; }
-          }
-          @keyframes owlPencil-${uid} {
-            0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
-            35% { transform: translate(-3px, -2px) rotate(-8deg); }
-            70% { transform: translate(-1px, 1.5px) rotate(4deg); }
-          }
-          @keyframes owlMagnify-${uid} {
-            0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
-            50% { transform: translate(-3px, -2.5px) rotate(-7deg); }
-          }
-          @keyframes owlFloat-${uid} {
-            0%, 100% { transform: translateY(0px); opacity: 1; }
-            50% { transform: translateY(-3.5px); opacity: 0.75; }
-          }
-          @keyframes owlCheerL-${uid} {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(-14deg); }
-          }
-          @keyframes owlCheerR-${uid} {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(14deg); }
-          }
-          @keyframes owlPop-${uid} {
-            0%, 100% { transform: scale(1) translateY(0px); }
-            50% { transform: scale(1.1) translateY(-2.5px); }
-          }
-          @keyframes owlShrug-${uid} {
-            0%, 100% { transform: rotate(0deg) translateY(0px); }
-            50% { transform: rotate(-3.5deg) translateY(-2px); }
-          }
+          @keyframes owlBob-${uid} { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2.5px); } }
+          @keyframes owlShadow-${uid} { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(0.92); opacity: 0.7; } }
+          @keyframes owlBlink-${uid} { 0%, 44%, 48%, 94%, 98%, 100% { transform: scaleY(1); } 46%, 96% { transform: scaleY(0.08); } }
+          @keyframes owlWave-${uid} { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-10deg) translateY(-1.5px); } }
+          @keyframes owlBeam-${uid} { 0%, 100% { opacity: 0.92; transform: scaleX(1); } 50% { opacity: 0.42; transform: scaleX(0.9); } }
+          @keyframes owlPencil-${uid} { 0%, 100% { transform: translate(0,0) rotate(0deg); } 40% { transform: translate(-3px,-2px) rotate(-8deg); } }
+          @keyframes owlMagnify-${uid} { 0%, 100% { transform: translate(0,0) rotate(0deg); } 50% { transform: translate(-3px,-2px) rotate(-7deg); } }
+          @keyframes owlShrug-${uid} { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-3deg) translateY(-2px); } }
         </style>
-      ` : '';
+      `;
 
       const defs = `
         <defs>
           <radialGradient id="owlBody-${uid}" cx="36%" cy="28%" r="70%">
-            <stop offset="0%" stop-color="#C2BBFF"/>
-            <stop offset="52%" stop-color="#958BFF"/>
-            <stop offset="100%" stop-color="#5E52D6"/>
+            <stop offset="0%" stop-color="#C2BBFF"/><stop offset="52%" stop-color="#958BFF"/><stop offset="100%" stop-color="#5E52D6"/>
           </radialGradient>
           <radialGradient id="owlBelly-${uid}" cx="45%" cy="30%" r="65%">
-            <stop offset="0%" stop-color="#FFFFFF"/>
-            <stop offset="65%" stop-color="#EBEAF8"/>
-            <stop offset="100%" stop-color="#D0CCF5"/>
+            <stop offset="0%" stop-color="#FFFFFF"/><stop offset="65%" stop-color="#EBEAF8"/><stop offset="100%" stop-color="#D0CCF5"/>
           </radialGradient>
           <linearGradient id="owlGlasses-${uid}" x1="20%" y1="10%" x2="80%" y2="95%">
-            <stop offset="0%" stop-color="#E4FF8F"/>
-            <stop offset="55%" stop-color="#C6F453"/>
-            <stop offset="100%" stop-color="#8BC419"/>
+            <stop offset="0%" stop-color="#E4FF8F"/><stop offset="55%" stop-color="#C6F453"/><stop offset="100%" stop-color="#8BC419"/>
           </linearGradient>
           <radialGradient id="owlCoral-${uid}" cx="35%" cy="25%" r="75%">
-            <stop offset="0%" stop-color="#FFA585"/>
-            <stop offset="60%" stop-color="#F67D56"/>
-            <stop offset="100%" stop-color="#C84D28"/>
+            <stop offset="0%" stop-color="#FFA585"/><stop offset="60%" stop-color="#F67D56"/><stop offset="100%" stop-color="#C84D28"/>
           </radialGradient>
           <linearGradient id="owlWing-${uid}" x1="15%" y1="10%" x2="85%" y2="90%">
-            <stop offset="0%" stop-color="#AEAAFF"/>
-            <stop offset="65%" stop-color="#7B70EE"/>
-            <stop offset="100%" stop-color="#5044BE"/>
+            <stop offset="0%" stop-color="#AEAAFF"/><stop offset="65%" stop-color="#7B70EE"/><stop offset="100%" stop-color="#5044BE"/>
           </linearGradient>
           <linearGradient id="scanBeam-${uid}" x1="50%" y1="0%" x2="50%" y2="100%">
-            <stop offset="0%" stop-color="#6BD4E6" stop-opacity="0.7"/>
-            <stop offset="100%" stop-color="#6BD4E6" stop-opacity="0"/>
+            <stop offset="0%" stop-color="#6BD4E6" stop-opacity="0.7"/><stop offset="100%" stop-color="#6BD4E6" stop-opacity="0"/>
           </linearGradient>
           <radialGradient id="owlShadow-${uid}" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#111111" stop-opacity="0.22"/>
-            <stop offset="100%" stop-color="#111111" stop-opacity="0"/>
+            <stop offset="0%" stop-color="#111111" stop-opacity="0.22"/><stop offset="100%" stop-color="#111111" stop-opacity="0"/>
           </radialGradient>
         </defs>
       `;
 
-      const groundShadow = `<ellipse class="owl-shadow-${uid}" cx="60" cy="112" rx="31" ry="6" fill="url(#owlShadow-${uid})"/>`;
-
-      const baseBody = `
-        <rect x="42" y="100" width="13" height="8" rx="4" fill="url(#owlCoral-${uid})"/>
-        <rect x="65" y="100" width="13" height="8" rx="4" fill="url(#owlCoral-${uid})"/>
-        <g class="owl-tuft-${uid}">
-          <ellipse cx="55" cy="19" rx="5.5" ry="9.5" transform="rotate(-18 55 19)" fill="url(#owlGlasses-${uid})"/>
-          <ellipse cx="64" cy="17" rx="5.5" ry="10.5" transform="rotate(14 64 17)" fill="url(#owlBody-${uid})"/>
-        </g>
-        <rect x="24" y="21" width="72" height="83" rx="36" fill="url(#owlBody-${uid})"/>
-        <ellipse cx="46" cy="31" rx="18" ry="8" transform="rotate(-14 46 31)" fill="#FFFFFF" fill-opacity="0.24"/>
-        <ellipse cx="60" cy="81" rx="22" ry="18" fill="url(#owlBelly-${uid})"/>
-        <path d="M51 77C54 79.5 57 79.5 60 77C63 79.5 66 79.5 69 77" stroke="#958BFF" stroke-width="2.2" stroke-linecap="round" stroke-opacity="0.45"/>
-        <path d="M54 84C56.5 86 59.5 86 62 84" stroke="#6BD4E6" stroke-width="2.2" stroke-linecap="round"/>
-      `;
-
       const eyeShiftX = pose === 'review' ? 1.8 : (pose === 'empty' ? -1.8 : 0);
       const eyeShiftY = pose === 'checking' || pose === 'scanning' ? 2.2 : (pose === 'empty' ? 1.6 : 0);
-      const face = `
-        <circle cx="45" cy="51" r="15.5" fill="url(#owlGlasses-${uid})"/>
-        <circle cx="75" cy="51" r="15.5" fill="url(#owlGlasses-${uid})"/>
-        <rect x="56" y="48.5" width="8" height="4.5" rx="2.2" fill="#8BC419"/>
-        <circle cx="45" cy="51" r="11.2" fill="#FFFFFF"/>
-        <circle cx="75" cy="51" r="11.2" fill="#FFFFFF"/>
-        <g class="owl-blink-${uid}">
-          <circle cx="${46.2 + eyeShiftX}" cy="${51.5 + eyeShiftY}" r="7.2" fill="#16161A"/>
-          <circle cx="${73.8 + eyeShiftX}" cy="${51.5 + eyeShiftY}" r="7.2" fill="#16161A"/>
-          <circle cx="${43.5 + eyeShiftX}" cy="${48.2 + eyeShiftY}" r="2.8" fill="#FFFFFF"/>
-          <circle cx="${48.5 + eyeShiftX}" cy="${54 + eyeShiftY}" r="1.3" fill="#6BD4E6"/>
-          <circle cx="${71.2 + eyeShiftX}" cy="${48.2 + eyeShiftY}" r="2.8" fill="#FFFFFF"/>
-          <circle cx="${76.2 + eyeShiftX}" cy="${54 + eyeShiftY}" r="1.3" fill="#6BD4E6"/>
-        </g>
-        <ellipse cx="32" cy="63" rx="4.5" ry="2.6" fill="#F67D56" fill-opacity="0.32"/>
-        <ellipse cx="88" cy="63" rx="4.5" ry="2.6" fill="#F67D56" fill-opacity="0.32"/>
-        <path d="M55 60C55 57.5 65 57.5 65 60C65 63.5 61.8 68 60 68C58.2 68 55 63.5 55 60Z" fill="url(#owlCoral-${uid})"/>
-        <ellipse cx="58.5" cy="60.5" rx="1.8" ry="1" fill="#FFFFFF" fill-opacity="0.45"/>
-      `;
 
-      let actionOverlay = '';
+      let action = '';
       if (pose === 'welcome') {
-        actionOverlay = `
+        action = `
           <path d="M25 58C15 62 13 77 20 87C24 92 31 89 32 82C33 74 31 63 25 58Z" fill="url(#owlWing-${uid})"/>
           <g class="owl-wave-${uid}">
             <path d="M95 57C105 53 111 63 107 74C104 82 95 83 91 77C88 71 90 60 95 57Z" fill="url(#owlWing-${uid})"/>
@@ -510,20 +305,18 @@
               <polygon points="102.2,30 104.8,30 103.5,27" fill="#111111"/>
               <rect x="100" y="55" width="7" height="4.5" rx="1.8" fill="url(#owlCoral-${uid})"/>
             </g>
-          </g>
-        `;
+          </g>`;
       } else if (pose === 'scanning') {
-        actionOverlay = `
+        action = `
           <path d="M25 60C18 68 22 83 34 86C40 87 43 81 40 75C36 69 31 61 25 60Z" fill="url(#owlWing-${uid})"/>
           <path d="M95 60C102 68 98 83 86 86C80 87 77 81 80 75C84 69 89 61 95 60Z" fill="url(#owlWing-${uid})"/>
           <polygon class="owl-beam-${uid}" points="46,85 74,85 84,112 36,112" fill="url(#scanBeam-${uid})"/>
           <rect x="44" y="71" width="32" height="19" rx="5" fill="#111111" stroke="#333333" stroke-width="1.5"/>
           <circle cx="60" cy="80.5" r="5" fill="#6BD4E6"/>
           <circle cx="60" cy="80.5" r="2.2" fill="#111111"/>
-          <circle class="owl-led-${uid}" cx="71" cy="75.5" r="1.6" fill="#C6F453"/>
-        `;
+          <circle cx="71" cy="75.5" r="1.6" fill="#C6F453"/>`;
       } else if (pose === 'checking') {
-        actionOverlay = `
+        action = `
           <path d="M25 60C17 66 19 80 29 85C35 87 40 82 38 75C35 69 31 62 25 60Z" fill="url(#owlWing-${uid})"/>
           <path d="M95 60C103 65 101 80 91 85C85 88 80 83 82 76C85 70 89 62 95 60Z" fill="url(#owlWing-${uid})"/>
           <rect x="34" y="75" width="34" height="27" rx="5" fill="#FFFFFF" stroke="#111111" stroke-width="1.8"/>
@@ -540,69 +333,66 @@
               <polygon points="77,94 79.5,94 78.25,97" fill="#111111"/>
               <rect x="75" y="63" width="6.5" height="4" rx="1.5" fill="url(#owlCoral-${uid})"/>
             </g>
-          </g>
-        `;
+          </g>`;
       } else if (pose === 'review') {
-        actionOverlay = `
+        action = `
           <path d="M25 58C15 62 13 77 20 87C24 92 31 89 32 82C33 74 31 63 25 58Z" fill="url(#owlWing-${uid})"/>
           <g class="owl-magnify-${uid}">
             <path d="M95 57C105 53 111 63 107 74C104 82 95 83 91 77C88 71 90 60 95 57Z" fill="url(#owlWing-${uid})"/>
             <line x1="94" y1="78" x2="105" y2="93" stroke="#111111" stroke-width="4.5" stroke-linecap="round"/>
             <circle cx="88" cy="69" r="11" fill="#6BD4E6" fill-opacity="0.32" stroke="#111111" stroke-width="3"/>
-            <path d="M83 64C85 62 88 61.5 91 62.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
           </g>
-          <text class="owl-qmark-${uid}" x="100" y="34" fill="#F67D56" font-size="16" font-weight="800">?</text>
-        `;
+          <text x="100" y="34" fill="#F67D56" font-size="16" font-weight="800">?</text>`;
       } else if (pose === 'empty') {
-        actionOverlay = `
-          <path d="M35 32.5C39 30.5 45 31 49 33" stroke="#5044BE" stroke-width="2.2" stroke-linecap="round"/>
-          <path d="M71 33C75 31 81 30.5 85 32.5" stroke="#5044BE" stroke-width="2.2" stroke-linecap="round"/>
+        action = `
           <g class="owl-shrug-${uid}">
             <path d="M25 56C13 55 10 67 17 76C22 81 30 79 31 72C32 65 30 57 25 56Z" fill="url(#owlWing-${uid})"/>
             <path d="M95 58C105 56 110 66 105 76C101 83 93 84 90 77C87 71 89 61 95 58Z" fill="url(#owlWing-${uid})"/>
             <g transform="rotate(8 95 72)">
               <rect x="82" y="54" width="26" height="32" rx="5" fill="#FFFFFF" stroke="#958BFF" stroke-width="1.8" stroke-dasharray="3.5 2.5"/>
-              <circle cx="90" cy="64" r="2" stroke="#D0CCF5" stroke-width="1.4"/>
-              <line x1="95" y1="64" x2="103" y2="64" stroke="#E4E4DE" stroke-width="1.8" stroke-linecap="round"/>
-              <circle cx="90" cy="71" r="2" stroke="#D0CCF5" stroke-width="1.4"/>
-              <line x1="95" y1="71" x2="101" y2="71" stroke="#E4E4DE" stroke-width="1.8" stroke-linecap="round"/>
-              <circle cx="90" cy="78" r="2" stroke="#D0CCF5" stroke-width="1.4"/>
-              <line x1="95" y1="78" x2="99" y2="78" stroke="#E4E4DE" stroke-width="1.8" stroke-linecap="round"/>
+              <line x1="89" y1="64" x2="102" y2="64" stroke="#E4E4DE" stroke-width="2" stroke-linecap="round"/>
+              <line x1="89" y1="71" x2="100" y2="71" stroke="#E4E4DE" stroke-width="2" stroke-linecap="round"/>
+              <line x1="89" y1="78" x2="98" y2="78" stroke="#E4E4DE" stroke-width="2" stroke-linecap="round"/>
             </g>
-          </g>
-          <g class="owl-dots-${uid}">
-            <circle cx="19" cy="36" r="3" fill="#D0CCF5"/>
-            <circle cx="13" cy="27" r="2" fill="#C6F453"/>
-          </g>
-        `;
+          </g>`;
       } else {
-        actionOverlay = `
-          <path class="owl-wing-l-${uid}" d="M26 52C12 42 10 29 19 25C26 22 32 32 33 44C33 49 30 54 26 52Z" fill="url(#owlWing-${uid})"/>
-          <path class="owl-wing-r-${uid}" d="M94 52C108 42 110 29 101 25C94 22 88 32 87 44C87 49 90 54 94 52Z" fill="url(#owlWing-${uid})"/>
-          <g class="owl-badge-${uid}">
-            <circle cx="98" cy="20" r="10" fill="#C6F453" stroke="#111111" stroke-width="2"/>
-            <path d="M93.5 20L96.8 23.2L103 16.8" stroke="#111111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-          </g>
-        `;
+        action = `
+          <path d="M26 52C12 42 10 29 19 25C26 22 32 32 33 44C33 49 30 54 26 52Z" fill="url(#owlWing-${uid})"/>
+          <path d="M94 52C108 42 110 29 101 25C94 22 88 32 87 44C87 49 90 54 94 52Z" fill="url(#owlWing-${uid})"/>
+          <circle cx="98" cy="20" r="10" fill="#C6F453" stroke="#111111" stroke-width="2"/>
+          <path d="M93.5 20L96.8 23.2L103 16.8" stroke="#111111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
       }
 
       return `
         <svg width="${size}" height="${size}" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 select-none">
-          ${animStyle}
-          ${defs}
-          ${groundShadow}
+          ${animStyle}${defs}
+          <ellipse class="owl-shadow-${uid}" cx="60" cy="112" rx="31" ry="6" fill="url(#owlShadow-${uid})"/>
           <g class="owl-bob-${uid}">
-            ${baseBody}
-            ${face}
-            ${actionOverlay}
+            <rect x="42" y="100" width="13" height="8" rx="4" fill="url(#owlCoral-${uid})"/>
+            <rect x="65" y="100" width="13" height="8" rx="4" fill="url(#owlCoral-${uid})"/>
+            <ellipse cx="55" cy="19" rx="5.5" ry="9.5" transform="rotate(-18 55 19)" fill="url(#owlGlasses-${uid})"/>
+            <ellipse cx="64" cy="17" rx="5.5" ry="10.5" transform="rotate(14 64 17)" fill="url(#owlBody-${uid})"/>
+            <rect x="24" y="21" width="72" height="83" rx="36" fill="url(#owlBody-${uid})"/>
+            <ellipse cx="46" cy="31" rx="18" ry="8" transform="rotate(-14 46 31)" fill="#FFFFFF" fill-opacity="0.24"/>
+            <ellipse cx="60" cy="81" rx="22" ry="18" fill="url(#owlBelly-${uid})"/>
+            <circle cx="45" cy="51" r="15.5" fill="url(#owlGlasses-${uid})"/>
+            <circle cx="75" cy="51" r="15.5" fill="url(#owlGlasses-${uid})"/>
+            <rect x="56" y="48.5" width="8" height="4.5" rx="2.2" fill="#8BC419"/>
+            <circle cx="45" cy="51" r="11.2" fill="#FFFFFF"/>
+            <circle cx="75" cy="51" r="11.2" fill="#FFFFFF"/>
+            <g class="owl-blink-${uid}">
+              <circle cx="${46.2 + eyeShiftX}" cy="${51.5 + eyeShiftY}" r="7.2" fill="#16161A"/>
+              <circle cx="${73.8 + eyeShiftX}" cy="${51.5 + eyeShiftY}" r="7.2" fill="#16161A"/>
+              <circle cx="${43.5 + eyeShiftX}" cy="${48.2 + eyeShiftY}" r="2.8" fill="#FFFFFF"/>
+              <circle cx="${71.2 + eyeShiftX}" cy="${48.2 + eyeShiftY}" r="2.8" fill="#FFFFFF"/>
+            </g>
+            <path d="M55 60C55 57.5 65 57.5 65 60C65 63.5 61.8 68 60 68C58.2 68 55 63.5 55 60Z" fill="url(#owlCoral-${uid})"/>
+            ${action}
           </g>
         </svg>
       `;
     }
 
-    /* ============================================================
-       DETERMINISTIC INLINE SVG QR GENERATOR
-       ============================================================ */
     function generateQrSvg(seed, size = 56) {
       let hash = 0;
       for (let i = 0; i < seed.length; i++) hash = ((hash << 5) - hash) + seed.charCodeAt(i);
@@ -622,737 +412,139 @@
     }
 
     /* ============================================================
-       SHARED NAVIGATION COMPONENTS
+       SECTION 1: OVERVIEW (HERO + 4 PILLARS)
        ============================================================ */
-    function renderFloatingNav(activeTab, isDark = false) {
-      const tabs = [
-        { id: 'home', screen: 'home', icon: '<path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5.5v-6.5h-5V21H4a1 1 0 0 1-1-1z"/>' },
-        { id: 'exams', screen: 'exams', icon: '<rect x="5" y="3" width="14" height="18" rx="2"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/>' },
-        { id: 'scan', screen: 'scan', icon: '<path d="M4 8V5a1 1 0 0 1 1-1h3M20 8V5a1 1 0 0 0-1-1h-3M4 16v3a1 1 0 0 0 1 1h3M20 16v3a1 1 0 0 1-1 1h-3"/><rect x="9" y="9" width="6" height="6" rx="1"/>' },
-        { id: 'results', screen: 'results', icon: '<line x1="6" y1="19" x2="6" y2="13"/><line x1="12" y1="19" x2="12" y2="7"/><line x1="18" y1="19" x2="18" y2="11"/>' },
-        { id: 'profile', screen: 'profile', icon: '<circle cx="12" cy="8.5" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/>' }
-      ];
-
+    function renderOverviewSection() {
       return `
-        <div class="px-5 pb-5 pt-2 shrink-0">
-          <div class="${isDark ? 'bg-[#1C1C1C]' : 'bg-[#111111]'} rounded-full px-3 py-2 flex items-center justify-between">
-            ${tabs.map(t => {
-              const active = activeTab === t.id;
-              return `
-                <button onclick="go('${t.screen}')"
-                  class="w-11 h-11 rounded-full flex items-center justify-center cursor-pointer transition-colors ${active ? 'bg-[#C6F453] text-[#111111]' : 'text-white/85 hover:text-white'}">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${t.icon}</svg>
+        <section id="overview" class="max-w-[1200px] mx-auto px-5 sm:px-8 pt-12 sm:pt-16 pb-20">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center pb-16">
+            <!-- Left Copy -->
+            <div class="lg:col-span-7">
+              <div class="flex items-center gap-3 mb-6">
+                ${renderOwlSvg('welcome', 64, 'hero-owl')}
+                <div class="text-xs font-semibold text-[#6E6E68]">Android-first · Offline SQLite + OpenCV OMR</div>
+              </div>
+
+              <h1 class="display-hero mb-5">
+                <span class="display-light">Check exam papers</span>
+                <span class="display-bold">without internet.</span>
+              </h1>
+
+              <p class="text-sm sm:text-base text-[#5C5C56] max-w-[540px] leading-relaxed mb-8">
+                ExamIQ is a standalone mobile examination system for teachers. Manage rosters, print QR-coded OMR sheets, correct camera tilt automatically, and grade an entire class directly on your phone.
+              </p>
+
+              <div class="flex flex-wrap items-center gap-3">
+                <button onclick="scrollToSection('download')" class="px-6 py-3.5 rounded-full bg-[#111111] text-white text-sm font-semibold cursor-pointer">
+                  Download Android APK
                 </button>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
-    }
+                <button onclick="scrollToSection('workflow')" class="px-6 py-3.5 rounded-full bg-[#EAEAE5] text-[#111111] text-sm font-semibold cursor-pointer">
+                  See how it works →
+                </button>
+              </div>
 
-    function renderBackHeader(backTo, rightHtml = '') {
-      return `
-        <div class="flex items-center justify-between mb-5">
-          <button onclick="go('${backTo}')" class="w-10 h-10 rounded-full bg-white flex items-center justify-center font-bold text-base cursor-pointer">‹</button>
-          <div>${rightHtml}</div>
-        </div>
+              <!-- Open Hairline Metrics Strip -->
+              <div class="grid grid-cols-3 gap-6 mt-12 pt-6 hairline-t max-w-[520px]">
+                <div>
+                  <div class="text-2xl font-bold tracking-tight">&lt; 1s</div>
+                  <div class="text-xs text-[#6E6E68] mt-0.5">Per paper scan</div>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold tracking-tight">0 KB</div>
+                  <div class="text-xs text-[#6E6E68] mt-0.5">Internet required</div>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold tracking-tight">100%</div>
+                  <div class="text-xs text-[#6E6E68] mt-0.5">Local SQLite data</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Authentic Mobile Preview -->
+            <div class="lg:col-span-5 flex justify-center lg:justify-end">
+              <div class="web-phone-shell bg-[#F5F5F2] text-[#111111] p-5">
+                <div class="flex items-center justify-between mb-4">
+                  <span class="text-xs font-bold">Dashboard</span>
+                  <span class="text-[11px] text-[#6E6E68]">Offline · SQLite</span>
+                </div>
+
+                <div class="space-y-3.5 mb-4">
+                  <div class="notched-card bg-[#958BFF]">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <div class="text-[11px] opacity-80">Grade 10 Rizal · Quarterly</div>
+                        <div class="text-xl font-bold tracking-tight mt-0.5">Mathematics</div>
+                      </div>
+                      <span class="w-8 h-8 rounded-full bg-white/35 flex items-center justify-center text-xs font-bold">↗</span>
+                    </div>
+                    <div class="flex items-center justify-between mt-6 text-xs font-semibold">
+                      <span class="opacity-80">Nov 24</span>
+                      <span>38 / 40</span>
+                    </div>
+                  </div>
+
+                  <div class="notched-card bg-[#C6F453]">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <div class="text-[11px] opacity-80">Grade 10 Rizal · Quiz 3</div>
+                        <div class="text-xl font-bold tracking-tight mt-0.5">Science</div>
+                      </div>
+                      <span class="w-8 h-8 rounded-full bg-white/35 flex items-center justify-center text-xs font-bold">↗</span>
+                    </div>
+                    <div class="flex items-center justify-between mt-6 text-xs font-semibold">
+                      <span class="opacity-80">Nov 20</span>
+                      <span>40 / 40</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="notched-card bg-[#111111] text-white">
+                  <div class="flex items-end justify-between">
+                    <div>
+                      <div class="text-[11px] text-[#94948E]">Overall passing (≥75%)</div>
+                      <div class="text-2xl font-bold mt-0.5">84%</div>
+                    </div>
+                    <span class="text-xs font-semibold text-[#C6F453]">99 / 118 passed</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 Core Pillars — Signature Notched Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div onclick="scrollToSection('workflow')" class="notched-card bg-[#958BFF] cursor-pointer">
+              <div class="text-xs opacity-80">01 · Prepare</div>
+              <div class="text-xl font-bold tracking-tight mt-1">QR Answer Sheets</div>
+              <p class="text-xs opacity-85 leading-relaxed mt-4">Generate printable A4 bubble sheets with unique student QR codes and 4 corner registration marks.</p>
+            </div>
+
+            <div onclick="scrollToSection('alignment')" class="notched-card bg-[#6BD4E6] cursor-pointer">
+              <div class="text-xs opacity-80">02 · Align</div>
+              <div class="text-xl font-bold tracking-tight mt-1">OpenCV Warp</div>
+              <p class="text-xs opacity-85 leading-relaxed mt-4">Automatically detects corner markers and fixes rotation or angle skew before checking begins.</p>
+            </div>
+
+            <div onclick="scrollToSection('demo')" class="notched-card bg-[#C6F453] cursor-pointer">
+              <div class="text-xs opacity-80">03 · Grade</div>
+              <div class="text-xl font-bold tracking-tight mt-1">On-Device OMR</div>
+              <p class="text-xs opacity-85 leading-relaxed mt-4">Recognizes shaded bubbles, compares against your local answer key, and flags unclear items.</p>
+            </div>
+
+            <div onclick="scrollToSection('download')" class="notched-card bg-[#F67D56] cursor-pointer">
+              <div class="text-xs opacity-80">04 · Export</div>
+              <div class="text-xl font-bold tracking-tight mt-1">Excel &amp; PDF Reports</div>
+              <p class="text-xs opacity-85 leading-relaxed mt-4">Export class grade sheets, passing rate summaries, and full SQLite database backups offline.</p>
+            </div>
+          </div>
+        </section>
       `;
     }
 
     /* ============================================================
-       ALL 25 MOBILE SCREENS
+       SECTION 2: INTERACTIVE SCANNER ALIGNMENT & REVIEW DEMO
        ============================================================ */
-    const ONBOARDING_STEPS = [
-      {
-        idx: 0,
-        next: 'onboarding-2',
-        color: '#958BFF',
-        pose: 'welcome',
-        tag: 'Step 1 of 3 · Prepare',
-        light: 'Print papers with',
-        bold: 'unique QRs',
-        desc: 'Build exams and generate standardized OMR bubble sheets with 4 corner registration marks for every student.',
-        cta: 'Next'
-      },
-      {
-        idx: 1,
-        next: 'onboarding-3',
-        color: '#6BD4E6',
-        pose: 'scanning',
-        tag: 'Step 2 of 3 · Capture',
-        light: 'Scan & align',
-        bold: 'in one second',
-        desc: 'Point your camera to identify the student QR and auto-correct paper tilt with on-device OpenCV alignment.',
-        cta: 'Next'
-      },
-      {
-        idx: 2,
-        next: 'register',
-        color: '#C6F453',
-        pose: 'checking',
-        tag: 'Step 3 of 3 · Grade Offline',
-        light: 'Check & grade',
-        bold: 'without internet',
-        desc: 'Compare shaded bubbles against your local SQLite answer key, review flagged items, and export Excel or PDF reports.',
-        cta: 'Get started'
-      }
-    ];
-
-    function renderOnboardingStep(stepIndex, uid = 'ob') {
-      const step = ONBOARDING_STEPS[stepIndex];
-      const stepIds = ['onboarding-1', 'onboarding-2', 'onboarding-3'];
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111] p-6">
-          <div class="flex items-center justify-between">
-            ${renderMinimalLogoSvg('dark', 36)}
-            <button onclick="go('register')" class="text-xs font-semibold text-[#6E6E68] cursor-pointer">Skip</button>
-          </div>
-
-          <div class="my-auto py-4">
-            <div class="notched-card flex flex-col items-center justify-center py-10 mb-7" style="background:${step.color}">
-              <div class="text-[11px] font-semibold opacity-80 mb-3">${step.tag}</div>
-              ${renderOwlPoseSvg(step.pose, 168, uid)}
-            </div>
-
-            <h2 class="display-heading-sm mb-3">
-              <span class="display-light">${step.light}</span>
-              <span class="display-bold">${step.bold}</span>
-            </h2>
-            <p class="text-xs text-[#6E6E68] leading-relaxed">${step.desc}</p>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-center gap-2 mb-5">
-              ${stepIds.map((id, i) => `
-                <button onclick="go('${id}')" class="h-2 rounded-full cursor-pointer transition-all ${i === stepIndex ? 'w-7 bg-[#111111]' : 'w-2 bg-[#D4D4CE]'}"></button>
-              `).join('')}
-            </div>
-            <button onclick="go('${step.next}')" class="w-full py-3.5 rounded-full bg-[#111111] text-white text-xs font-semibold cursor-pointer">
-              ${step.cta}
-            </button>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderRegistration() {
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111] p-6 overflow-y-auto no-scrollbar">
-          <div>
-            <div class="flex items-center justify-between mb-7">
-              ${renderMinimalLogoSvg('dark', 38)}
-              <button onclick="go('backup')" class="text-xs font-semibold text-[#5E52D6] cursor-pointer">Restore backup</button>
-            </div>
-
-            <h2 class="display-heading-sm mb-2">
-              <span class="display-light">Create your</span>
-              <span class="display-bold">teacher profile</span>
-            </h2>
-            <p class="text-xs text-[#6E6E68] mb-6">Stored privately on this device via SQLite. No internet or server account needed.</p>
-
-            <div class="space-y-3.5">
-              <div>
-                <label class="block text-[11px] font-semibold text-[#4A4A45] mb-1.5">Full name</label>
-                <input type="text" value="${state.regForm.name}" oninput="state.regForm.name=this.value"
-                  placeholder="e.g. Elena Reyes"
-                  class="w-full px-4 py-3 rounded-2xl bg-white border border-[#E4E4DE] text-xs font-medium text-[#111111] outline-none focus:border-[#111111]"/>
-              </div>
-
-              <div>
-                <label class="block text-[11px] font-semibold text-[#4A4A45] mb-1.5">School / Institution</label>
-                <input type="text" value="${state.regForm.school}" oninput="state.regForm.school=this.value"
-                  placeholder="e.g. Calapan National High School"
-                  class="w-full px-4 py-3 rounded-2xl bg-white border border-[#E4E4DE] text-xs font-medium text-[#111111] outline-none focus:border-[#111111]"/>
-              </div>
-
-              <div>
-                <label class="block text-[11px] font-semibold text-[#4A4A45] mb-1.5">Role / Primary subjects</label>
-                <input type="text" value="${state.regForm.role}" oninput="state.regForm.role=this.value"
-                  placeholder="e.g. Mathematics & Science Teacher"
-                  class="w-full px-4 py-3 rounded-2xl bg-white border border-[#E4E4DE] text-xs font-medium text-[#111111] outline-none focus:border-[#111111]"/>
-              </div>
-
-              <div>
-                <div class="flex items-center justify-between mb-1.5">
-                  <label class="text-[11px] font-semibold text-[#4A4A45]">4-digit device PIN</label>
-                  <span class="text-[10px] text-[#6E6E68]">Optional lock</span>
-                </div>
-                <input type="password" maxlength="4" value="${state.regForm.pin}" oninput="state.regForm.pin=this.value"
-                  placeholder="••••"
-                  class="w-full px-4 py-3 rounded-2xl bg-white border border-[#E4E4DE] text-xs font-bold tracking-[0.4em] text-[#111111] outline-none focus:border-[#111111]"/>
-              </div>
-            </div>
-          </div>
-
-          <div class="pt-6">
-            <button onclick="completeRegistration()" class="w-full py-3.5 rounded-full bg-[#111111] text-white text-xs font-semibold cursor-pointer">
-              Continue to dashboard
-            </button>
-            <div class="text-center text-[11px] text-[#6E6E68] mt-3">
-              100% offline · All records stay on your phone
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderHome(uid = 'home') {
-      const unread = state.notifications.filter(n => n.unread).length;
-      const cards = state.homeTab === 'to-scan' ? state.exams.slice(0, 2) : [state.exams[0]];
-
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            <div class="flex items-center justify-between mb-5">
-              <button onclick="go('profile')" class="w-10 h-10 rounded-full bg-white flex items-center justify-center cursor-pointer">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8.5" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
-              </button>
-              <button onclick="go('notifications')" class="w-10 h-10 rounded-full bg-white flex items-center justify-center cursor-pointer relative">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                ${unread > 0 ? `<span class="w-2 h-2 rounded-full bg-[#F67D56] absolute top-2.5 right-2.5"></span>` : ''}
-              </button>
-            </div>
-
-            <div class="flex items-center justify-between gap-2 mb-5">
-              <h2 class="display-heading-sm">
-                <span class="display-light">Pick the next</span>
-                <span class="display-bold">paper to check</span>
-              </h2>
-              <button onclick="setViewMode('brand')" class="cursor-pointer bg-transparent border-0 p-0 shrink-0" title="View all 6 character poses">
-                ${renderOwlPoseSvg('welcome', 72, uid)}
-              </button>
-            </div>
-
-            <div class="grid grid-cols-2 bg-[#EAEAE5] p-1 rounded-full mb-5">
-              <button onclick="state.homeTab='to-scan'; render();"
-                class="py-2.5 rounded-full text-xs font-semibold cursor-pointer ${state.homeTab === 'to-scan' ? 'bg-[#111111] text-white' : 'text-[#4A4A45]'}">To scan</button>
-              <button onclick="state.homeTab='needs-review'; render();"
-                class="py-2.5 rounded-full text-xs font-semibold cursor-pointer ${state.homeTab === 'needs-review' ? 'bg-[#111111] text-white' : 'text-[#4A4A45]'}">Needs review</button>
-            </div>
-
-            <div class="space-y-4 mb-6">
-              ${cards.map(ex => `
-                <div onclick="state.selectedExamId='${ex.id}'; go('scan');" class="notched-card cursor-pointer" style="background:${ex.color}">
-                  <div class="flex items-start justify-between">
-                    <div>
-                      <div class="text-[11px] opacity-80">${ex.section} · ${ex.term}</div>
-                      <div class="text-[22px] font-bold tracking-tight mt-0.5">${ex.subject}</div>
-                    </div>
-                    <span class="w-9 h-9 rounded-full bg-white/35 flex items-center justify-center text-sm font-bold">↗</span>
-                  </div>
-                  <div class="flex items-center justify-between mt-7 text-xs font-semibold">
-                    <span class="inline-flex items-center gap-1.5 opacity-80">
-                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                      ${ex.date}
-                    </span>
-                    <span>${ex.scanned} / ${ex.total}</span>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-
-            <div class="pb-4">
-              <div class="flex items-center justify-between mb-2.5">
-                <span class="text-xs font-bold">Class passing rate</span>
-                <button onclick="go('results')" class="text-[11px] text-[#6E6E68] font-medium cursor-pointer">View all →</button>
-              </div>
-              <div class="notched-card bg-[#111111] text-white mb-3">
-                <div class="flex items-end justify-between">
-                  <div>
-                    <div class="text-[11px] text-[#94948E]">Overall passing (≥75%)</div>
-                    <div class="text-3xl font-bold mt-1">84%</div>
-                  </div>
-                  <div class="text-right text-xs text-[#C6F453] font-semibold">99 / 118 passed</div>
-                </div>
-              </div>
-              ${state.subjects.map(sub => `
-                <div class="py-2.5 hairline-b flex items-center justify-between text-xs">
-                  <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full" style="background:${sub.color}"></span>
-                    <span class="font-semibold">${sub.name}</span>
-                  </div>
-                  <span class="font-bold">${sub.passingRate}%</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-
-          ${renderFloatingNav('home', false)}
-        </div>
-      `;
-    }
-
-    function renderExams() {
-      const filters = ['All', 'Mathematics', 'Science', 'English'];
-      const filtered = state.examFilter === 'All' ? state.exams : state.exams.filter(e => e.subject === state.examFilter);
-
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="display-heading-sm">
-                <span class="display-light">All your</span>
-                <span class="display-bold">exams</span>
-              </h2>
-              <button onclick="go('builder')" class="px-3.5 py-2 rounded-full bg-[#111111] text-white text-xs font-semibold cursor-pointer">+ New</button>
-            </div>
-
-            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 mb-4">
-              ${filters.map(f => `
-                <button onclick="state.examFilter='${f}'; render();"
-                  class="px-3.5 py-1.5 rounded-full text-xs font-medium shrink-0 cursor-pointer ${state.examFilter === f ? 'bg-[#111111] text-white' : 'bg-white border border-[#E4E4DE] text-[#4A4A45]'}">${f}</button>
-              `).join('')}
-            </div>
-
-            <div class="space-y-3.5 pb-4">
-              ${filtered.map(ex => `
-                <div onclick="state.selectedExamId='${ex.id}'; go('generator');" class="notched-card cursor-pointer" style="background:${ex.color}">
-                  <div class="text-[11px] opacity-80">${ex.term} · ${ex.section}</div>
-                  <div class="text-[22px] font-bold tracking-tight mt-0.5">${ex.subject}</div>
-                  <div class="flex items-center justify-between mt-5 text-xs font-semibold">
-                    <span class="opacity-80">${ex.date}</span>
-                    <span>${ex.scanned} / ${ex.total}</span>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-
-          ${renderFloatingNav('exams', false)}
-        </div>
-      `;
-    }
-
-    function renderBuilder() {
-      const ex = state.exams.find(e => e.id === state.selectedExamId) || state.exams[0];
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            ${renderBackHeader('exams', `<button onclick="go('answer-key')" class="text-xs font-semibold text-[#5E52D6] cursor-pointer">Answer key →</button>`)}
-            <h2 class="display-heading-sm mb-1.5">
-              <span class="display-light">Exam</span>
-              <span class="display-bold">builder</span>
-            </h2>
-            <div class="text-xs text-[#6E6E68] mb-4">${ex.subject} · ${ex.term} · ${ex.section}</div>
-
-            <div class="grid grid-cols-2 gap-2 mb-5">
-              <button onclick="showToast('Imported 50 items from local .docx / .csv')"
-                class="py-2.5 rounded-full bg-white border border-[#E4E4DE] text-xs font-semibold cursor-pointer">Import file</button>
-              <button onclick="state.questions.push({num: state.questions.length+1, text: 'Solve for y: 3y - 6 = 15', choices: ['5','7','8','9'], answer: 'B'}); render(); showToast('Added Question #' + state.questions.length);"
-                class="py-2.5 rounded-full bg-[#111111] text-white text-xs font-semibold cursor-pointer">+ Add question</button>
-            </div>
-
-            <div class="divide-y divide-[#E4E4DE] pb-4">
-              ${state.questions.map((q, qIdx) => `
-                <div class="py-3.5">
-                  <div class="flex items-start justify-between gap-2">
-                    <div class="text-xs font-bold leading-snug">${q.num}. ${q.text}</div>
-                    <button onclick="state.questions[${qIdx}].answer = ['A','B','C','D'][(['A','B','C','D'].indexOf('${q.answer}')+1)%4]; render();"
-                      class="px-2 py-0.5 rounded-md bg-[#C6F453] text-[#111111] text-[10px] font-bold shrink-0 cursor-pointer">Key: ${q.answer}</button>
-                  </div>
-                  <div class="grid grid-cols-2 gap-1.5 mt-2.5">
-                    ${q.choices.map((ch, cIdx) => {
-                      const letter = ['A','B','C','D'][cIdx];
-                      const isAns = letter === q.answer;
-                      return `
-                        <button onclick="state.questions[${qIdx}].answer='${letter}'; render();"
-                          class="px-2.5 py-1.5 rounded-xl text-[11px] text-left cursor-pointer border ${isAns ? 'bg-[#111111] text-white border-[#111111] font-semibold' : 'bg-white text-[#4A4A45] border-[#E4E4DE]'}">
-                          <span class="opacity-70 mr-1">${letter}.</span>${ch}
-                        </button>
-                      `;
-                    }).join('')}
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-          ${renderFloatingNav('exams', false)}
-        </div>
-      `;
-    }
-
-    function renderAnswerKey() {
-      const totalPts = state.answerKey.length * state.pointsPerItem;
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            ${renderBackHeader('builder', `<button onclick="go('generator')" class="text-xs font-semibold text-[#5E52D6] cursor-pointer">Generate →</button>`)}
-            <h2 class="display-heading-sm mb-1.5">
-              <span class="display-light">Answer</span>
-              <span class="display-bold">key</span>
-            </h2>
-            <p class="text-xs text-[#6E6E68] mb-4">Tap any tile to cycle A–D · Saved offline in SQLite</p>
-
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-semibold">Points per item</span>
-              <div class="flex items-center bg-[#EAEAE5] p-1 rounded-full">
-                ${[1, 2, 5].map(pt => `
-                  <button onclick="state.pointsPerItem=${pt}; render();"
-                    class="px-3 py-1 rounded-full text-[11px] font-semibold cursor-pointer ${state.pointsPerItem === pt ? 'bg-[#111111] text-white' : 'text-[#4A4A45]'}">${pt} pt</button>
-                `).join('')}
-              </div>
-            </div>
-
-            <div class="grid grid-cols-4 gap-2.5 mb-5">
-              ${state.answerKey.map((ans, idx) => `
-                <button onclick="state.answerKey[${idx}] = ['A','B','C','D'][(['A','B','C','D'].indexOf('${ans}')+1)%4]; render();"
-                  class="rounded-2xl p-3 text-left bg-[#C6F453] text-[#111111] cursor-pointer">
-                  <div class="flex items-center justify-between text-[10px] opacity-75">
-                    <span>${idx + 1}</span>
-                    <span>${state.pointsPerItem}p</span>
-                  </div>
-                  <div class="text-lg font-bold mt-1">${ans}</div>
-                </button>
-              `).join('')}
-            </div>
-
-            <div class="py-3 hairline-b flex items-center justify-between text-xs mb-4">
-              <span class="text-[#6E6E68]">Total configured</span>
-              <span class="font-bold">${state.answerKey.length} items · ${totalPts} pts</span>
-            </div>
-
-            <button onclick="showToast('Answer key (${totalPts} pts) saved to local SQLite')" class="w-full py-3.5 rounded-full bg-[#111111] text-white text-xs font-semibold cursor-pointer mb-4">
-              Save answer key
-            </button>
-          </div>
-          ${renderFloatingNav('exams', false)}
-        </div>
-      `;
-    }
-
-    function renderGenerator() {
-      const ex = state.exams.find(e => e.id === state.selectedExamId) || state.exams[0];
-      const st = state.students.find(s => s.id === state.selectedGenStudentId) || state.students[0];
-      const qrPayload = `${ex.id}|${st.id}|${st.section}`;
-
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            ${renderBackHeader('exams', `<button onclick="go('answer-key')" class="text-xs font-semibold text-[#6E6E68] cursor-pointer">Edit key</button>`)}
-            <h2 class="display-heading-sm mb-4">
-              <span class="display-light">Exam</span>
-              <span class="display-bold">generator</span>
-            </h2>
-
-            <div class="mb-4">
-              <div class="text-[11px] text-[#6E6E68] mb-1.5">Preview assigned QR sheet</div>
-              <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
-                ${state.students.slice(0, 4).map(s => `
-                  <button onclick="state.selectedGenStudentId='${s.id}'; render();"
-                    class="px-3 py-1.5 rounded-full text-[11px] font-semibold shrink-0 cursor-pointer ${s.id === st.id ? 'bg-[#111111] text-white' : 'bg-white border border-[#E4E4DE] text-[#4A4A45]'}">${s.name.split(' ')[0]}</button>
-                `).join('')}
-              </div>
-            </div>
-
-            <div class="bg-white border border-[#E4E4DE] rounded-[22px] p-4 mb-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="w-2.5 h-2.5 bg-[#111111]"></span>
-                <span class="text-[9px] text-[#6E6E68]">4 Corner Registration Marks</span>
-                <span class="w-2.5 h-2.5 bg-[#111111]"></span>
-              </div>
-              <div class="flex items-center justify-between pb-3 border-b border-[#E4E4DE]">
-                <div>
-                  <div class="text-xs font-bold">${ex.subject} · ${ex.term}</div>
-                  <div class="text-[11px] font-semibold mt-0.5">${st.name}</div>
-                  <div class="text-[10px] text-[#6E6E68]">${st.id} · ${st.section}</div>
-                </div>
-                ${generateQrSvg(qrPayload, 52)}
-              </div>
-              <div class="py-3 grid grid-cols-2 gap-2 text-[10px] text-[#6E6E68]">
-                <div>1. ○ A ○ B ○ C ○ D</div>
-                <div>6. ○ A ○ B ○ C ○ D</div>
-                <div>2. ○ A ○ B ○ C ○ D</div>
-                <div>7. ○ A ○ B ○ C ○ D</div>
-              </div>
-              <div class="flex items-center justify-between pt-2 border-t border-[#E4E4DE]">
-                <span class="w-2.5 h-2.5 bg-[#111111]"></span>
-                <span class="text-[9px] text-[#6E6E68]">${ex.items} standardized OMR items</span>
-                <span class="w-2.5 h-2.5 bg-[#111111]"></span>
-              </div>
-            </div>
-
-            <button onclick="go('exam-paper')" class="w-full py-3 rounded-full bg-[#EAEAE5] text-[#111111] text-xs font-semibold cursor-pointer mb-2">
-              Open full exam paper
-            </button>
-            <button onclick="showToast('Generated ${ex.total} printable QR PDFs locally')" class="w-full py-3.5 rounded-full bg-[#111111] text-white text-xs font-semibold cursor-pointer mb-4">
-              Generate ${ex.total} printable PDFs
-            </button>
-          </div>
-          ${renderFloatingNav('exams', false)}
-        </div>
-      `;
-    }
-
-    function renderExamPaper() {
-      const ex = state.exams.find(e => e.id === state.selectedExamId) || state.exams[0];
-      const st = state.students.find(s => s.id === state.selectedGenStudentId) || state.students[0];
-      const qrPayload = `${ex.id}|${st.id}|${st.section}`;
-
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            ${renderBackHeader('generator', `<span class="text-[11px] text-[#6E6E68]">A4 Standardized</span>`)}
-            <h2 class="display-heading-sm mb-4">
-              <span class="display-light">Exam</span>
-              <span class="display-bold">paper</span>
-            </h2>
-
-            <div class="bg-white border border-[#D4D4CE] rounded-[20px] p-4 mb-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="w-3.5 h-3.5 bg-[#111111] inline-block"></span>
-                <span class="text-[8px] uppercase tracking-widest text-[#6E6E68] font-semibold">OMR Registration Template · v1</span>
-                <span class="w-3.5 h-3.5 bg-[#111111] inline-block"></span>
-              </div>
-
-              <div class="flex items-start justify-between pb-2.5 border-b border-[#111111]">
-                <div>
-                  <div class="text-xs font-bold leading-tight">${ex.subject} · ${ex.term}</div>
-                  <div class="text-[11px] font-semibold mt-0.5">${st.name}</div>
-                  <div class="text-[9px] text-[#6E6E68] mt-0.5">ID: ${st.id} · ${st.section}</div>
-                  <div class="text-[9px] text-[#6E6E68]">Date: ${ex.date}, 2026</div>
-                </div>
-                ${generateQrSvg(qrPayload, 54)}
-              </div>
-
-              <div class="flex items-center justify-between py-2 border-b border-[#E2E2DC] text-[9px] text-[#6E6E68]">
-                <span>Shade bubbles completely</span>
-                <span class="inline-flex items-center gap-1 font-semibold text-[#111111]">
-                  <span class="w-2.5 h-2.5 rounded-full bg-[#111111] inline-block"></span> Correct
-                </span>
-              </div>
-
-              <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 py-3 text-[9px]">
-                ${Array.from({ length: 16 }, (_, i) => `
-                  <div class="flex items-center justify-between">
-                    <span class="w-4 font-semibold text-[#6E6E68]">${i + 1}.</span>
-                    <div class="flex items-center gap-1">
-                      ${['A','B','C','D'].map(o => `<span class="w-3.5 h-3.5 rounded-full border border-[#111111] flex items-center justify-center text-[7px] font-semibold">${o}</span>`).join('')}
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-
-              <div class="flex items-center justify-between pt-2 border-t border-[#E2E2DC]">
-                <span class="w-3.5 h-3.5 bg-[#111111] inline-block"></span>
-                <span class="text-[8px] text-[#6E6E68]">Do not fold or cover corner marks</span>
-                <span class="w-3.5 h-3.5 bg-[#111111] inline-block"></span>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2.5 pb-4">
-              <button onclick="showToast('Shared printable PDF via device share sheet')" class="py-3 rounded-full bg-[#EAEAE5] text-[#111111] text-xs font-semibold cursor-pointer">Share / Print</button>
-              <button onclick="go('paper-scan')" class="py-3 rounded-full bg-[#111111] text-white text-xs font-semibold cursor-pointer">Test scan →</button>
-            </div>
-          </div>
-          ${renderFloatingNav('exams', false)}
-        </div>
-      `;
-    }
-
-    function renderQrScanner() {
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#111111] text-white p-5">
-          <div class="flex items-center justify-between pt-1">
-            <button onclick="go('home')" class="w-10 h-10 rounded-full bg-[#EAEAE5] text-[#111111] flex items-center justify-center font-bold cursor-pointer">‹</button>
-            <button onclick="state.flashOn=!state.flashOn; render();"
-              class="w-10 h-10 rounded-full ${state.flashOn ? 'bg-[#C6F453]' : 'bg-[#EAEAE5]'} text-[#111111] flex items-center justify-center cursor-pointer">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            </button>
-          </div>
-
-          <div class="flex-1 flex items-center justify-center">
-            <div class="w-48 h-48 rounded-[30px] border-2 border-[#C6F453] flex items-center justify-center">
-              <div class="w-24 h-24 rounded-2xl bg-[#25262B]"></div>
-            </div>
-          </div>
-
-          <div class="notched-card notched-card-dark-notch bg-[#6BD4E6] text-white">
-            <div class="text-xs opacity-90">Paper found</div>
-            <div class="text-[24px] font-bold tracking-tight mt-0.5">Juan Dela Cruz</div>
-            <div class="text-xs opacity-90 mt-0.5">Mathematics · Quarterly · Rizal</div>
-
-            <div class="mt-5 mb-5">
-              <div class="flex items-center justify-between px-1">
-                <span class="w-3 h-3 rounded-full bg-[#111111]"></span>
-                <span class="flex-1 h-[1.5px] bg-[#111111]/40 mx-1"></span>
-                <span class="w-3 h-3 rounded-full border-[1.5px] border-[#111111]"></span>
-                <span class="flex-1 h-[1.5px] bg-[#111111]/40 mx-1"></span>
-                <span class="w-3 h-3 rounded-full border-[1.5px] border-[#111111]"></span>
-              </div>
-              <div class="flex items-center justify-between text-[11px] font-medium mt-1.5">
-                <span>QR</span>
-                <span>Capture</span>
-                <span>Check</span>
-              </div>
-            </div>
-
-            <button onclick="go('paper-scan')" class="w-full py-3.5 rounded-full bg-[#111111] text-white text-xs font-semibold cursor-pointer">
-              Capture answer sheet
-            </button>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderPaperScanner() {
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#111111] text-white p-5">
-          <div class="flex items-center justify-between pt-1">
-            <button onclick="go('scan')" class="w-10 h-10 rounded-full bg-[#1C1C1C] text-white flex items-center justify-center font-bold cursor-pointer">‹</button>
-            <div class="text-center">
-              <div class="text-xs font-bold">Paper scanner</div>
-              <div class="text-[10px] text-[#94948E]">Juan Dela Cruz · 2026-0001</div>
-            </div>
-            <button onclick="state.flashOn=!state.flashOn; render();"
-              class="w-10 h-10 rounded-full ${state.flashOn ? 'bg-[#C6F453] text-[#111111]' : 'bg-[#1C1C1C] text-white'} flex items-center justify-center cursor-pointer">⚡</button>
-          </div>
-
-          <div class="flex-1 my-5 rounded-[24px] border-2 border-[#C6F453] bg-[#181818] p-5 flex flex-col justify-between">
-            <div class="flex justify-between">
-              <span class="w-5 h-5 border-t-[3px] border-l-[3px] border-[#C6F453] rounded-tl-md"></span>
-              <span class="w-5 h-5 border-t-[3px] border-r-[3px] border-[#C6F453] rounded-tr-md"></span>
-            </div>
-            <div class="text-center">
-              <div class="text-xs font-semibold text-[#C6F453]">4 / 4 registration marks locked</div>
-              <div class="text-[11px] text-[#94948E] mt-1">Paper boundaries detected · Ready to align</div>
-            </div>
-            <div class="flex justify-between">
-              <span class="w-5 h-5 border-b-[3px] border-l-[3px] border-[#C6F453] rounded-bl-md"></span>
-              <span class="w-5 h-5 border-b-[3px] border-r-[3px] border-[#C6F453] rounded-br-md"></span>
-            </div>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-between px-4 mb-4">
-              <span class="w-3 h-3 rounded-full bg-[#C6F453]"></span>
-              <span class="flex-1 h-[1.5px] bg-[#C6F453] mx-1"></span>
-              <span class="w-3 h-3 rounded-full bg-[#C6F453]"></span>
-              <span class="flex-1 h-[1.5px] bg-[#333333] mx-1"></span>
-              <span class="w-3 h-3 rounded-full border border-[#666666]"></span>
-            </div>
-            <button onclick="go('alignment')" class="w-full py-3.5 rounded-full bg-[#C6F453] text-[#111111] text-xs font-bold cursor-pointer">
-              Capture &amp; align paper
-            </button>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderAlignment() {
-      const isAligned = state.alignmentView === 'aligned';
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#111111] text-white p-5">
-          <div class="flex items-center justify-between pt-1">
-            <button onclick="go('paper-scan')" class="w-10 h-10 rounded-full bg-[#1C1C1C] text-white flex items-center justify-center font-bold cursor-pointer">‹</button>
-            <div class="text-center">
-              <div class="text-xs font-bold">OpenCV alignment</div>
-              <div class="text-[10px] text-[#94948E]">Perspective &amp; template warp</div>
-            </div>
-            <span class="w-10 text-right text-[11px] font-bold text-[#C6F453]">4/4</span>
-          </div>
-
-          <div class="grid grid-cols-2 bg-[#1C1C1C] p-1 rounded-full mt-4">
-            <button onclick="state.alignmentView='raw'; render();"
-              class="py-1.5 rounded-full text-[11px] font-semibold cursor-pointer ${!isAligned ? 'bg-[#C6F453] text-[#111111]' : 'text-[#94948E]'}">Raw scan (-4.2°)</button>
-            <button onclick="state.alignmentView='aligned'; render();"
-              class="py-1.5 rounded-full text-[11px] font-semibold cursor-pointer ${isAligned ? 'bg-[#C6F453] text-[#111111]' : 'text-[#94948E]'}">Aligned (0.0°)</button>
-          </div>
-
-          <div class="flex-1 my-4 rounded-[22px] bg-[#181818] border border-[#2A2A2A] p-5 flex items-center justify-center overflow-hidden">
-            <div class="w-[218px] bg-[#F5F5F2] text-[#111111] rounded-xl p-3.5 transition-transform duration-200 border-2 ${isAligned ? 'border-[#C6F453]' : 'border-[#F67D56]'}"
-              style="transform: ${isAligned ? 'rotate(0deg) skewX(0deg)' : 'rotate(-4.5deg) skewX(3deg) scale(0.95)'};">
-              <div class="flex items-center justify-between mb-2">
-                <span class="w-3 h-3 bg-[#111111] ring-2 ring-[#C6F453]"></span>
-                <span class="text-[8px] font-bold uppercase tracking-wider text-[#6E6E68]">${isAligned ? 'Template Locked' : 'Skew Detected'}</span>
-                <span class="w-3 h-3 bg-[#111111] ring-2 ring-[#C6F453]"></span>
-              </div>
-              <div class="text-[10px] font-bold pb-1.5 border-b border-[#111111]">Juan Dela Cruz · 2026-0001</div>
-              <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 py-2.5 text-[8px]">
-                ${[1,2,3,4,5,6,7,8].map((n, idx) => `
-                  <div class="flex items-center justify-between">
-                    <span class="text-[#6E6E68] font-semibold">${n}.</span>
-                    <div class="flex items-center gap-0.5">
-                      ${['A','B','C','D'].map((_, cIdx) => {
-                        const filled = (idx % 4 === cIdx);
-                        return `<span class="w-3 h-3 rounded-full border ${isAligned ? 'border-[#5E52D6]' : 'border-[#111111]'} ${filled ? 'bg-[#111111]' : 'bg-transparent'}"></span>`;
-                      }).join('')}
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-              <div class="flex items-center justify-between pt-1.5 border-t border-[#DCDCD6]">
-                <span class="w-3 h-3 bg-[#111111] ring-2 ring-[#C6F453]"></span>
-                <span class="text-[8px] text-[#6E6E68]">50 bubbles mapped</span>
-                <span class="w-3 h-3 bg-[#111111] ring-2 ring-[#C6F453]"></span>
-              </div>
-            </div>
-          </div>
-
-          <div class="text-xs mb-4">
-            <div class="py-2 hairline-dark-b flex justify-between">
-              <span class="text-[#94948E]">Corner markers (TL, TR, BL, BR)</span>
-              <span class="text-[#C6F453] font-semibold">Detected</span>
-            </div>
-            <div class="py-2 hairline-dark-b flex justify-between">
-              <span class="text-[#94948E]">Rotation &amp; perspective warp</span>
-              <span class="text-white font-semibold">-4.2° → 0.0°</span>
-            </div>
-            <div class="py-2 flex justify-between">
-              <span class="text-[#94948E]">Lighting &amp; sharpness check</span>
-              <span class="text-[#C6F453] font-semibold">Clear</span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2.5">
-            <button onclick="go('paper-scan')" class="py-3.5 rounded-full bg-[#1C1C1C] text-white text-xs font-semibold cursor-pointer">Retake</button>
-            <button onclick="go('checking')" class="py-3.5 rounded-full bg-[#C6F453] text-[#111111] text-xs font-bold cursor-pointer">Run OMR check</button>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderChecking(uid = 'chk') {
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#111111] text-white p-6">
-          <div class="flex items-center justify-between pt-2">
-            <div>
-              <h2 class="display-heading-sm">
-                <span class="display-light">Automated</span>
-                <span class="display-bold">checking</span>
-              </h2>
-              <p class="text-xs text-[#94948E] mt-2">Running offline · SQLite key</p>
-            </div>
-            ${renderOwlPoseSvg('checking', 72, uid)}
-          </div>
-
-          <div class="space-y-4">
-            <div class="py-3 hairline-dark-b flex justify-between text-xs">
-              <span>1. Perspective alignment</span>
-              <span class="text-[#C6F453] font-semibold">Done</span>
-            </div>
-            <div class="py-3 hairline-dark-b flex justify-between text-xs">
-              <span>2. Shaded bubble detection (50 items)</span>
-              <span class="text-[#C6F453] font-semibold">Done</span>
-            </div>
-            <div class="py-3 hairline-dark-b flex justify-between text-xs">
-              <span>3. Compare with local answer key</span>
-              <span class="text-[#C6F453] font-semibold">38 / 50</span>
-            </div>
-            <div class="py-3 flex justify-between text-xs">
-              <span>4. Flagged for manual verification</span>
-              <span class="text-[#F67D56] font-semibold">2 items (#4, #5)</span>
-            </div>
-          </div>
-
-          <button onclick="go('review')" class="w-full py-3.5 rounded-full bg-[#C6F453] text-[#111111] text-xs font-bold cursor-pointer">
-            Review flagged answers →
-          </button>
-        </div>
-      `;
-    }
-
-    function renderReview() {
-      const juan = state.students[0];
+    function renderDemoInner() {
       const tileColor = t => {
         if (t.type === 'correct') return 'bg-[#C6F453] text-[#111111]';
         if (t.type === 'wrong') return 'bg-[#F67D56] text-[#111111]';
@@ -1361,696 +553,399 @@
       };
 
       return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111] p-5">
-          <div>
-            <div class="h-44 rounded-[26px] bg-[#E5E5E0] relative flex items-center justify-center mb-5">
-              <button onclick="go('alignment')" class="w-9 h-9 rounded-full bg-white flex items-center justify-center font-bold absolute top-3.5 left-3.5 cursor-pointer">‹</button>
-              <button onclick="showToast('Zooming into aligned OMR sheet')" class="w-9 h-9 rounded-full bg-white flex items-center justify-center absolute top-3.5 right-3.5 cursor-pointer">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              </button>
-              <span class="text-xs text-[#6E6E68]">Scanned paper</span>
-            </div>
-
-            <div class="text-xs text-[#6E6E68]">Mathematics · Quarterly</div>
-            <div class="text-[24px] font-bold tracking-tight mt-0.5">
-              ${juan.name} <span>${juan.score}</span> <span class="font-normal text-[#6E6E68]">/ ${juan.total}</span>
-            </div>
-
-            <div class="flex items-center gap-2 mt-2.5 mb-5">
-              <span class="px-3 py-1 rounded-full bg-white border border-[#E4E4DE] text-[11px] font-medium">${juan.id}</span>
-              <span class="px-3 py-1 rounded-full bg-white border border-[#E4E4DE] text-[11px] font-medium">${juan.section}</span>
-            </div>
-
-            <div class="grid grid-cols-4 gap-2.5">
-              ${state.reviewTiles.map((t, i) => `
-                <button onclick="overrideReviewTile(${i})"
-                  class="rounded-2xl p-3 text-left min-h-[72px] flex flex-col justify-between cursor-pointer ${tileColor(t)}">
-                  <span class="text-[11px] opacity-80">${t.num}</span>
-                  <span class="text-sm font-bold leading-tight">${t.label}</span>
-                </button>
-              `).join('')}
-            </div>
+        <div class="max-w-[1200px] mx-auto px-5 sm:px-8">
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+            <h2 class="display-section">
+              <span class="display-light">Try the scanner</span>
+              <span class="display-bold">alignment &amp; review.</span>
+            </h2>
+            <p class="text-xs sm:text-sm text-[#94948E] max-w-[400px]">
+              Toggle OpenCV perspective correction and tap any flagged answer tile to verify Juan Dela Cruz's score live.
+            </p>
           </div>
 
-          <div class="grid grid-cols-2 gap-3 pt-4">
-            <button onclick="go('paper-scan')" class="py-3.5 rounded-full bg-[#EAEAE5] text-[#111111] text-xs font-semibold cursor-pointer">Rescan</button>
-            <button onclick="state.students[0].status='Checked'; showToast('Saved Juan Dela Cruz (${juan.score}/${juan.total}) locally'); go('history');"
-              class="py-3.5 rounded-full bg-[#111111] text-white text-xs font-semibold cursor-pointer">Confirm result</button>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <!-- Left: OpenCV Alignment Interactive Preview -->
+            <div class="rounded-[28px] bg-[#181818] border border-[#262626] p-6 sm:p-8">
+              <div class="flex items-center justify-between gap-3 mb-6">
+                <div>
+                  <div class="text-sm font-bold">OpenCV perspective warp</div>
+                  <div class="text-xs text-[#8E8E88]">4 / 4 corner registration marks detected</div>
+                </div>
+                <div class="flex items-center bg-[#111111] p-1 rounded-full border border-[#2A2A2A]">
+                  <button onclick="setDemoAligned(false)"
+                    class="px-3 py-1 rounded-full text-xs font-semibold cursor-pointer ${!state.demoAligned ? 'bg-[#C6F453] text-[#111111]' : 'text-[#94948E]'}">Raw (-4.2°)</button>
+                  <button onclick="setDemoAligned(true)"
+                    class="px-3 py-1 rounded-full text-xs font-semibold cursor-pointer ${state.demoAligned ? 'bg-[#C6F453] text-[#111111]' : 'text-[#94948E]'}">Aligned (0.0°)</button>
+                </div>
+              </div>
+
+              <div class="rounded-[22px] bg-[#111111] p-8 flex items-center justify-center overflow-hidden min-h-[280px]">
+                <div class="w-[240px] bg-[#F5F5F2] text-[#111111] rounded-xl p-4 transition-transform duration-200 border-2 ${state.demoAligned ? 'border-[#C6F453]' : 'border-[#F67D56]'}"
+                  style="transform: ${state.demoAligned ? 'rotate(0deg) skewX(0deg)' : 'rotate(-4.5deg) skewX(3.5deg) scale(0.95)'};">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="w-3 h-3 bg-[#111111] ring-2 ring-[#C6F453]"></span>
+                    <span class="text-[8px] font-bold uppercase tracking-wider text-[#6E6E68]">${state.demoAligned ? 'Template Locked' : 'Skew Detected'}</span>
+                    <span class="w-3 h-3 bg-[#111111] ring-2 ring-[#C6F453]"></span>
+                  </div>
+                  <div class="text-[11px] font-bold pb-2 border-b border-[#111111]">Juan Dela Cruz · 2026-0001</div>
+                  <div class="grid grid-cols-2 gap-x-4 gap-y-2 py-3 text-[9px]">
+                    ${[1,2,3,4,5,6,7,8].map((n, idx) => `
+                      <div class="flex items-center justify-between">
+                        <span class="text-[#6E6E68] font-semibold">${n}.</span>
+                        <div class="flex items-center gap-1">
+                          ${['A','B','C','D'].map((_, cIdx) => `<span class="w-3 h-3 rounded-full border ${state.demoAligned ? 'border-[#5E52D6]' : 'border-[#111111]'} ${idx % 4 === cIdx ? 'bg-[#111111]' : ''}"></span>`).join('')}
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                  <div class="flex items-center justify-between pt-2 border-t border-[#DCDCD6]">
+                    <span class="w-3 h-3 bg-[#111111] ring-2 ring-[#C6F453]"></span>
+                    <span class="text-[8px] text-[#6E6E68]">50 bubbles mapped</span>
+                    <span class="w-3 h-3 bg-[#111111] ring-2 ring-[#C6F453]"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Manual Verification Tile Grid -->
+            <div class="rounded-[28px] bg-[#F5F5F2] text-[#111111] p-6 sm:p-8">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs text-[#6E6E68]">Mathematics · Quarterly</span>
+                <span class="text-xs font-semibold text-[#5E52D6]">Tap flagged tiles</span>
+              </div>
+              <div class="text-2xl font-bold tracking-tight mb-5">
+                Juan Dela Cruz <span>${state.demoScore}</span> <span class="font-normal text-[#6E6E68]">/ 50</span>
+              </div>
+
+              <div class="grid grid-cols-4 gap-2.5 mb-6">
+                ${state.demoTiles.map((t, i) => `
+                  <button onclick="overrideDemoTile(${i})"
+                    class="rounded-2xl p-3 text-left min-h-[76px] flex flex-col justify-between cursor-pointer ${tileColor(t)}">
+                    <span class="text-[11px] opacity-80">${t.num}</span>
+                    <span class="text-sm font-bold leading-tight">${t.label}</span>
+                  </button>
+                `).join('')}
+              </div>
+
+              <div class="flex items-center justify-between text-xs text-[#6E6E68] pt-4 hairline-t">
+                <span>Unclear items (#4 Blank, #5 A + C) are flagged automatically</span>
+                <button onclick="resetDemoTiles()" class="font-semibold text-[#111111] cursor-pointer">Reset</button>
+              </div>
+            </div>
           </div>
         </div>
       `;
     }
 
-    function overrideReviewTile(idx) {
-      const tile = state.reviewTiles[idx];
-      if (tile.type !== 'correct') {
-        tile.type = 'correct';
-        tile.label = tile.key;
-        state.students[0].score += 1;
-        showToast(`Item #${tile.num} verified as ${tile.key} (+1 pt)`);
-        render();
-      } else {
-        showToast(`Item #${tile.num} is already marked correct (${tile.key})`);
+    function renderDemoSection() {
+      return `<section id="demo" class="bg-[#111111] text-white py-20">${renderDemoInner()}</section>`;
+    }
+
+    function setDemoAligned(val) {
+      state.demoAligned = val;
+      const el = document.getElementById('demo');
+      if (el) el.innerHTML = renderDemoInner();
+    }
+
+    function overrideDemoTile(idx) {
+      const t = state.demoTiles[idx];
+      if (t.type !== 'correct') {
+        t.type = 'correct';
+        t.label = t.key;
+        state.demoScore += 1;
+        showToast(`Verified item #${t.num} as ${t.key} (+1 pt)`);
+        const el = document.getElementById('demo');
+        if (el) el.innerHTML = renderDemoInner();
       }
     }
 
-    function renderHistory() {
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#111111] text-white">
-          <div class="px-5 pt-7 overflow-y-auto no-scrollbar flex-1">
-            <h2 class="display-heading-sm mb-5">
-              <span class="display-light">Scan</span>
-              <span class="display-bold">history</span>
-            </h2>
-
-            <div class="flex items-center justify-between mb-6">
-              <div>
-                <div class="text-xs text-[#94948E]">Offline · Local SQLite</div>
-                <div class="text-xs font-bold mt-0.5">5 papers stored on device</div>
-              </div>
-              <button onclick="go('backup')" class="px-4 py-2.5 rounded-full bg-[#C6F453] text-[#111111] text-xs font-bold cursor-pointer">
-                Backup now
-              </button>
-            </div>
-
-            <div class="divide-y divide-[#232323]">
-              ${state.scanHistory.map(item => `
-                <div onclick="go('review')" class="py-4 flex items-center justify-between cursor-pointer">
-                  <div>
-                    <div class="text-sm font-bold">${item.name}</div>
-                    <div class="text-xs text-[#8E8E88] mt-0.5">${item.meta}</div>
-                  </div>
-                  <span class="text-xs font-bold" style="color:${item.color}">${item.status}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-
-          ${renderFloatingNav('scan', true)}
-        </div>
-      `;
-    }
-
-    function renderResults() {
-      const belowPassing = state.students.filter(s => (s.score / s.total) < 0.75);
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="display-heading-sm">
-                <span class="display-light">Class</span>
-                <span class="display-bold">results</span>
-              </h2>
-              <button onclick="go('reports')" class="px-3.5 py-2 rounded-full bg-[#111111] text-white text-xs font-semibold cursor-pointer">Reports</button>
-            </div>
-
-            <div class="grid grid-cols-2 bg-[#EAEAE5] p-1 rounded-full mb-5">
-              <button onclick="state.resultsTab='analytics'; render();"
-                class="py-2 rounded-full text-xs font-semibold cursor-pointer ${state.resultsTab === 'analytics' ? 'bg-[#111111] text-white' : 'text-[#4A4A45]'}">Analytics</button>
-              <button onclick="state.resultsTab='students'; render();"
-                class="py-2 rounded-full text-xs font-semibold cursor-pointer ${state.resultsTab === 'students' ? 'bg-[#111111] text-white' : 'text-[#4A4A45]'}">Student scores</button>
-            </div>
-
-            ${state.resultsTab === 'analytics' ? `
-              <div class="grid grid-cols-2 gap-3 mb-5">
-                <div class="notched-card bg-[#C6F453]">
-                  <div class="text-[11px] opacity-80">Passing rate</div>
-                  <div class="text-2xl font-bold mt-1">84%</div>
-                </div>
-                <div class="notched-card bg-[#958BFF]">
-                  <div class="text-[11px] opacity-80">Mean score</div>
-                  <div class="text-2xl font-bold mt-1">41.2</div>
-                </div>
-              </div>
-
-              <div class="text-xs font-bold mb-2">Students below 75% passing</div>
-              <div class="divide-y divide-[#E4E4DE] pb-4">
-                ${belowPassing.map(s => `
-                  <div class="py-3 flex items-center justify-between text-xs">
-                    <div>
-                      <div class="font-semibold">${s.name}</div>
-                      <div class="text-[#6E6E68]">${s.section}</div>
-                    </div>
-                    <span class="font-bold text-[#D94E28]">${s.score} / ${s.total}</span>
-                  </div>
-                `).join('')}
-              </div>
-            ` : `
-              <div class="divide-y divide-[#E4E4DE] pb-4">
-                ${state.students.map(s => `
-                  <div onclick="go('review')" class="py-3 flex items-center justify-between text-xs cursor-pointer">
-                    <div>
-                      <div class="font-semibold">${s.name}</div>
-                      <div class="text-[#6E6E68]">${s.id} · ${s.section}</div>
-                    </div>
-                    <span class="font-bold">${s.score} / ${s.total}</span>
-                  </div>
-                `).join('')}
-              </div>
-            `}
-          </div>
-          ${renderFloatingNav('results', false)}
-        </div>
-      `;
-    }
-
-    function renderReports() {
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            ${renderBackHeader('results')}
-            <h2 class="display-heading-sm mb-5">
-              <span class="display-light">Export</span>
-              <span class="display-bold">reports</span>
-            </h2>
-
-            <div class="space-y-3 mb-6">
-              <div onclick="showToast('Saved Grade10_Rizal_Math_Results.xlsx locally')" class="notched-card bg-[#C6F453] cursor-pointer">
-                <div class="text-[11px] opacity-80">Excel Spreadsheet (.xlsx)</div>
-                <div class="text-lg font-bold mt-0.5">Class Grade Sheet</div>
-                <div class="text-xs mt-3 font-medium">Item analysis + student scores</div>
-              </div>
-              <div onclick="showToast('Saved Grade10_Rizal_Summary.pdf locally')" class="notched-card bg-[#6BD4E6] cursor-pointer">
-                <div class="text-[11px] opacity-80">Printable Document (.pdf)</div>
-                <div class="text-lg font-bold mt-0.5">Passing Rate Summary</div>
-                <div class="text-xs mt-3 font-medium">Ready for school submission</div>
-              </div>
-            </div>
-
-            <div class="text-xs font-bold mb-2">Recent device exports</div>
-            <div class="divide-y divide-[#E4E4DE] text-xs">
-              <div class="py-3 flex justify-between">
-                <span>Science_Quiz3_Grades.xlsx</span>
-                <span class="text-[#6E6E68]">Nov 20</span>
-              </div>
-              <div class="py-3 flex justify-between">
-                <span>Math_Pretest_Summary.pdf</span>
-                <span class="text-[#6E6E68]">Nov 12</span>
-              </div>
-            </div>
-          </div>
-          ${renderFloatingNav('results', false)}
-        </div>
-      `;
-    }
-
-    function renderStudents() {
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            ${renderBackHeader('profile', `<button onclick="showToast('Imported CSV roster to SQLite')" class="text-xs font-semibold text-[#5E52D6] cursor-pointer">Import CSV</button>`)}
-            <h2 class="display-heading-sm mb-4">
-              <span class="display-light">Student</span>
-              <span class="display-bold">roster</span>
-            </h2>
-
-            <div class="divide-y divide-[#E4E4DE] pb-4">
-              ${state.students.map(s => `
-                <div class="py-3.5 flex items-center justify-between text-xs">
-                  <div>
-                    <div class="font-bold text-sm">${s.name}</div>
-                    <div class="text-[#6E6E68] mt-0.5">${s.id} · ${s.section}</div>
-                  </div>
-                  <span class="text-[#6E6E68] font-semibold">Edit</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-          ${renderFloatingNav('profile', false)}
-        </div>
-      `;
-    }
-
-    function renderClasses() {
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            ${renderBackHeader('profile', `<button onclick="showToast('Added new section locally')" class="text-xs font-semibold text-[#5E52D6] cursor-pointer">+ Section</button>`)}
-            <h2 class="display-heading-sm mb-5">
-              <span class="display-light">Classes &amp;</span>
-              <span class="display-bold">sections</span>
-            </h2>
-
-            <div class="divide-y divide-[#E4E4DE]">
-              ${state.classes.map(c => `
-                <div class="py-4 flex items-center justify-between">
-                  <div>
-                    <div class="text-sm font-bold">${c.grade} · ${c.section}</div>
-                    <div class="text-xs text-[#6E6E68] mt-0.5">Advisor: ${c.advisor}</div>
-                  </div>
-                  <span class="text-xs font-bold">${c.students} students</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-          ${renderFloatingNav('profile', false)}
-        </div>
-      `;
-    }
-
-    function renderSubjects() {
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            ${renderBackHeader('profile', `<button onclick="showToast('Added new subject locally')" class="text-xs font-semibold text-[#5E52D6] cursor-pointer">+ Subject</button>`)}
-            <h2 class="display-heading-sm mb-5">
-              <span class="display-light">Assigned</span>
-              <span class="display-bold">subjects</span>
-            </h2>
-
-            <div class="space-y-3">
-              ${state.subjects.map(sub => `
-                <div class="notched-card" style="background:${sub.color}">
-                  <div class="text-[11px] opacity-80">${sub.code} · ${sub.sections}</div>
-                  <div class="text-xl font-bold mt-0.5">${sub.name}</div>
-                  <div class="text-xs font-semibold mt-4">Passing rate: ${sub.passingRate}%</div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-          ${renderFloatingNav('profile', false)}
-        </div>
-      `;
-    }
-
-    function renderBackup() {
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            ${renderBackHeader('profile')}
-            <h2 class="display-heading-sm mb-5">
-              <span class="display-light">Backup &amp;</span>
-              <span class="display-bold">restore</span>
-            </h2>
-
-            <div class="notched-card bg-[#111111] text-white mb-5">
-              <div class="text-xs text-[#94948E]">Local SQLite Database</div>
-              <div class="text-2xl font-bold mt-1">14.8 MB</div>
-              <div class="text-xs text-[#C6F453] mt-3">Last backup: Yesterday, 4:15 PM</div>
-            </div>
-
-            <button onclick="showToast('Exported examiq_backup_2026.db to Downloads')" class="w-full py-3.5 rounded-full bg-[#111111] text-white text-xs font-semibold cursor-pointer mb-2.5">
-              Export local backup (.db)
-            </button>
-            <button onclick="showToast('Select a .db backup file to restore')" class="w-full py-3.5 rounded-full bg-[#EAEAE5] text-[#111111] text-xs font-semibold cursor-pointer">
-              Restore from file
-            </button>
-          </div>
-          ${renderFloatingNav('profile', false)}
-        </div>
-      `;
-    }
-
-    function renderProfile() {
-      const links = [
-        { label: 'Students', meta: '118 records', to: 'students' },
-        { label: 'Classes & sections', meta: '3 sections', to: 'classes' },
-        { label: 'Subjects', meta: '3 assigned', to: 'subjects' },
-        { label: 'Backup & restore', meta: 'SQLite · 14.8 MB', to: 'backup' },
-        { label: 'App settings', meta: 'OMR & device', to: 'settings' }
+    function resetDemoTiles() {
+      state.demoScore = 38;
+      state.demoTiles = [
+        { num: 1, label: 'A', key: 'A', type: 'correct' },
+        { num: 2, label: 'B → C', key: 'C', type: 'wrong' },
+        { num: 3, label: 'B', key: 'B', type: 'correct' },
+        { num: 4, label: 'Blank', key: 'A', type: 'blank' },
+        { num: 5, label: 'A + C', key: 'C', type: 'flagged' },
+        { num: 6, label: 'D', key: 'D', type: 'correct' },
+        { num: 7, label: 'A', key: 'A', type: 'correct' },
+        { num: 8, label: 'D → A', key: 'A', type: 'wrong' }
       ];
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            <div class="flex items-center justify-between mb-5">
-              <h2 class="display-heading-sm">
-                <span class="display-light">Teacher</span>
-                <span class="display-bold">profile</span>
-              </h2>
-              <button onclick="state.editingProfile=!state.editingProfile; render();"
-                class="px-3 py-1.5 rounded-full bg-white border border-[#E4E4DE] text-xs font-semibold cursor-pointer">
-                ${state.editingProfile ? 'Done' : 'Edit'}
-              </button>
-            </div>
-
-            <div class="flex items-center gap-3.5 pb-5 hairline-b">
-              <div class="w-14 h-14 rounded-full bg-[#958BFF] text-[#111111] flex items-center justify-center text-lg font-bold shrink-0">
-                ${state.teacher.initials}
-              </div>
-              <div class="min-w-0 flex-1">
-                ${state.editingProfile ? `
-                  <input value="${state.teacher.name}" onchange="state.teacher.name=this.value"
-                    class="w-full text-sm font-bold bg-white border border-[#D6D6D0] rounded-lg px-2 py-1 mb-1"/>
-                  <input value="${state.teacher.school}" onchange="state.teacher.school=this.value"
-                    class="w-full text-xs bg-white border border-[#D6D6D0] rounded-lg px-2 py-1"/>
-                ` : `
-                  <div class="text-base font-bold truncate">${state.teacher.name}</div>
-                  <div class="text-xs text-[#6E6E68] truncate">${state.teacher.role}</div>
-                  <div class="text-[11px] text-[#6E6E68] truncate mt-0.5">${state.teacher.school}</div>
-                `}
-              </div>
-            </div>
-
-            <div class="py-3.5 hairline-b flex items-center justify-between text-xs">
-              <span class="text-[#6E6E68]">Local storage</span>
-              <span class="font-semibold">${state.teacher.deviceId}</span>
-            </div>
-
-            <div class="divide-y divide-[#E4E4DE] pb-4">
-              ${links.map(l => `
-                <button onclick="go('${l.to}')" class="w-full py-3.5 flex items-center justify-between text-left cursor-pointer">
-                  <span class="text-sm font-semibold">${l.label}</span>
-                  <span class="text-xs text-[#6E6E68]">${l.meta} ›</span>
-                </button>
-              `).join('')}
-              <button onclick="showToast('Device passcode updated locally')" class="w-full py-3.5 flex items-center justify-between text-left cursor-pointer">
-                <span class="text-sm font-semibold text-[#D94E28]">Change device PIN</span>
-                <span class="text-xs text-[#6E6E68]">›</span>
-              </button>
-            </div>
-          </div>
-          ${renderFloatingNav('profile', false)}
-        </div>
-      `;
+      const el = document.getElementById('demo');
+      if (el) el.innerHTML = renderDemoInner();
     }
 
-    function renderSettings() {
-      const toggleRow = (key, label, sub) => `
-        <div class="py-3.5 flex items-center justify-between gap-3">
-          <div>
-            <div class="text-xs font-semibold">${label}</div>
-            <div class="text-[11px] text-[#6E6E68]">${sub}</div>
-          </div>
-          <button onclick="state.settings['${key}']=!state.settings['${key}']; render();"
-            class="w-11 h-6 rounded-full p-0.5 transition-colors cursor-pointer ${state.settings[key] ? 'bg-[#111111]' : 'bg-[#D6D6D0]'}">
-            <span class="block w-5 h-5 rounded-full ${state.settings[key] ? 'bg-[#C6F453] translate-x-5' : 'bg-white translate-x-0'} transition-transform"></span>
-          </button>
-        </div>
-      `;
+    /* ============================================================
+       SECTION 3: HOW IT WORKS (5-STEP WORKFLOW)
+       ============================================================ */
+    function renderWorkflowSection() {
+      const steps = [
+        { num: '01', color: '#958BFF', pose: 'welcome', title: 'Set up your local profile & rosters', desc: 'Create your teacher profile directly on your phone. Add or import CSV student rosters, grade levels, sections, and subjects into SQLite.' },
+        { num: '02', color: '#C6F453', pose: 'checking', title: 'Build exams & configure answer keys', desc: 'Create multiple-choice exams from scratch or import existing files. Tap answer-key tiles to set correct answers and points per item.' },
+        { num: '03', color: '#6BD4E6', pose: 'scanning', title: 'Print unique QR sheets & scan papers', desc: 'Generate printable A4 PDFs with a unique QR code per student. Scan completed papers with automatic QR identification and OpenCV alignment.' },
+        { num: '04', color: '#F67D56', pose: 'review', title: 'Verify flagged answers manually', desc: 'Blank or double-shaded bubbles are highlighted immediately so teachers can inspect and override them in one tap.' },
+        { num: '05', color: '#111111', pose: 'celebrate', dark: true, title: 'View analytics & export local reports', desc: 'Track subject and class passing rates (≥75%) and export ready-to-submit Excel (.xlsx) and PDF reports without an internet connection.' }
+      ];
 
       return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            ${renderBackHeader('profile')}
-            <h2 class="display-heading-sm mb-5">
-              <span class="display-light">Device</span>
-              <span class="display-bold">settings</span>
+        <section id="workflow" class="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 hairline-b">
+          <div class="max-w-[680px] mb-12">
+            <div class="text-xs font-semibold text-[#6E6E68] mb-3">End-to-End Offline Flow</div>
+            <h2 class="display-section mb-4">
+              <span class="display-light">From printable sheet</span>
+              <span class="display-bold">to final grade.</span>
             </h2>
-
-            <div class="divide-y divide-[#E4E4DE] mb-5">
-              ${toggleRow('autoCapture', 'Auto-capture aligned sheet', 'Snap once 4/4 corner marks lock')}
-              ${toggleRow('flagDoubleShade', 'Flag double-shaded bubbles', 'Require manual review on conflicts')}
-              ${toggleRow('autoLocalBackup', 'Weekly SQLite backup', 'Save encrypted copy to Downloads')}
-              ${toggleRow('lowScoreAlerts', 'Passing rate alerts', 'Notify when class dips below 75%')}
-            </div>
-
-            <div>
-              <div class="text-xs font-semibold mb-2">OMR shading sensitivity</div>
-              <div class="grid grid-cols-3 bg-[#EAEAE5] p-1 rounded-full">
-                ${['Strict', 'Balanced', 'Lenient'].map(lvl => `
-                  <button onclick="state.settings.omrSensitivity='${lvl}'; render();"
-                    class="py-2 rounded-full text-[11px] font-semibold cursor-pointer ${state.settings.omrSensitivity === lvl ? 'bg-[#111111] text-white' : 'text-[#4A4A45]'}">${lvl}</button>
-                `).join('')}
-              </div>
-            </div>
+            <p class="text-sm sm:text-base text-[#5C5C56] leading-relaxed">
+              Five straightforward steps designed around how teachers actually administer and check paper exams in the classroom.
+            </p>
           </div>
-          ${renderFloatingNav('profile', false)}
-        </div>
-      `;
-    }
 
-    function renderNotifications() {
-      return `
-        <div class="flex-1 flex flex-col justify-between h-full bg-[#F5F5F2] text-[#111111]">
-          <div class="px-5 pt-6 overflow-y-auto no-scrollbar flex-1">
-            ${renderBackHeader('home', `<button onclick="state.notifications.forEach(n=>n.unread=false); render();" class="text-xs font-semibold text-[#6E6E68] cursor-pointer">Mark read</button>`)}
-            <h2 class="display-heading-sm mb-5">
-              <span class="display-light">Device</span>
-              <span class="display-bold">alerts</span>
-            </h2>
-
-            <div class="divide-y divide-[#E4E4DE]">
-              ${state.notifications.map(n => `
-                <div class="py-4 flex items-start justify-between gap-3">
-                  <div>
-                    <div class="text-xs font-semibold">${n.title}</div>
-                    <div class="text-[11px] text-[#6E6E68] mt-0.5">${n.time}</div>
+          <div class="space-y-5">
+            ${steps.map((s, i) => `
+              <div class="notched-card ${s.dark ? 'bg-[#111111] text-white' : ''}" style="${s.dark ? '' : `background:${s.color}`}">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                  <div class="md:col-span-9">
+                    <div class="text-xs font-semibold opacity-75">Step ${s.num}</div>
+                    <h3 class="text-2xl sm:text-3xl font-bold tracking-tight mt-1 mb-2.5">${s.title}</h3>
+                    <p class="text-sm ${s.dark ? 'text-[#A1A19A]' : 'opacity-85'} max-w-[620px] leading-relaxed">${s.desc}</p>
                   </div>
-                  ${n.unread ? `<span class="w-2 h-2 rounded-full bg-[#F67D56] mt-1 shrink-0"></span>` : ''}
+                  <div class="md:col-span-3 flex justify-start md:justify-end">
+                    ${renderOwlSvg(s.pose, 108, 'wf-' + i)}
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    /* ============================================================
+       SECTION 4: OMR & ALIGNMENT (TECHNICAL SPEC + CLASSROOM FIT)
+       ============================================================ */
+    function renderAlignmentSection() {
+      const stack = [
+        { comp: 'Image capture', tech: 'React Native CLI Camera' },
+        { comp: 'Registration mark detection', tech: 'OpenCV (On-device)' },
+        { comp: 'Image correction', tech: '4-point perspective transformation' },
+        { comp: 'Template alignment', tech: 'Standardized A4 bubble coordinates' },
+        { comp: 'Answer detection', tech: 'Shaded-bubble OMR thresholding' },
+        { comp: 'Answer comparison & storage', tech: 'Local SQLite database' }
+      ];
+
+      return `
+        <section id="alignment" class="max-w-[1200px] mx-auto px-5 sm:px-8 py-20">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mb-16">
+            <div class="lg:col-span-7">
+              <div class="text-xs font-semibold text-[#6E6E68] mb-3">Answer Sheet Alignment Summary</div>
+              <h2 class="display-section mb-5">
+                <span class="display-light">Accurate even when</span>
+                <span class="display-bold">scanned at an angle.</span>
+              </h2>
+              <p class="text-sm sm:text-base text-[#5C5C56] leading-relaxed mb-8">
+                Every ExamIQ sheet includes four high-contrast corner registration marks. Before OMR reads a single bubble, OpenCV locates those four corners and warps the photo back to a flat, standardized coordinate grid.
+              </p>
+
+              <div class="divide-y divide-[#E4E4DE]">
+                <div class="py-4 flex justify-between gap-4 text-sm">
+                  <span class="font-bold">1. Standardized Answer Sheet</span>
+                  <span class="text-[#6E6E68] text-right">Fixed bubble grid, QR code &amp; 4 corner marks</span>
+                </div>
+                <div class="py-4 flex justify-between gap-4 text-sm">
+                  <span class="font-bold">2. Camera Scanning</span>
+                  <span class="text-[#6E6E68] text-right">Teacher captures completed sheet on Android</span>
+                </div>
+                <div class="py-4 flex justify-between gap-4 text-sm">
+                  <span class="font-bold">3. OpenCV Perspective Warp</span>
+                  <span class="text-[#6E6E68] text-right">Corrects rotation, tilt &amp; lens distortion</span>
+                </div>
+                <div class="py-4 flex justify-between gap-4 text-sm">
+                  <span class="font-bold">4. OMR Bubble Detection</span>
+                  <span class="text-[#6E6E68] text-right">Maps exact bubble coordinates &amp; flags blanks</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Standardized A4 Paper Preview -->
+            <div class="lg:col-span-5 flex justify-center">
+              <div class="w-full max-w-[360px] bg-white border border-[#D4D4CE] rounded-[24px] p-6">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="w-4 h-4 bg-[#111111]"></span>
+                  <span class="text-[9px] uppercase tracking-widest text-[#6E6E68] font-semibold">OMR Registration Template · v1</span>
+                  <span class="w-4 h-4 bg-[#111111]"></span>
+                </div>
+
+                <div class="flex items-start justify-between pb-3 border-b border-[#111111]">
+                  <div>
+                    <div class="text-xs font-bold">Mathematics · Quarterly</div>
+                    <div class="text-xs font-semibold mt-0.5">Juan Dela Cruz</div>
+                    <div class="text-[10px] text-[#6E6E68] mt-0.5">ID: 2026-0001 · Grade 10 Rizal</div>
+                  </div>
+                  ${generateQrSvg('ex-math-q1|2026-0001', 56)}
+                </div>
+
+                <div class="grid grid-cols-2 gap-x-5 gap-y-2 py-4 text-[10px]">
+                  ${Array.from({ length: 12 }, (_, i) => `
+                    <div class="flex items-center justify-between">
+                      <span class="font-semibold text-[#6E6E68] w-4">${i + 1}.</span>
+                      <div class="flex items-center gap-1">
+                        ${['A','B','C','D'].map(o => `<span class="w-4 h-4 rounded-full border border-[#111111] flex items-center justify-center text-[8px] font-semibold">${o}</span>`).join('')}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <div class="flex items-center justify-between pt-3 border-t border-[#E4E4DE]">
+                  <span class="w-4 h-4 bg-[#111111]"></span>
+                  <span class="text-[9px] text-[#6E6E68]">Keep corner marks visible</span>
+                  <span class="w-4 h-4 bg-[#111111]"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Technology Stack Dark Block -->
+          <div class="rounded-[28px] bg-[#111111] text-white p-8 sm:p-10">
+            <h3 class="display-section mb-6">
+              <span class="display-light">On-device</span>
+              <span class="display-bold">technology stack.</span>
+            </h3>
+            <div class="divide-y divide-[#242424]">
+              ${stack.map(row => `
+                <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-sm">
+                  <span class="text-[#94948E]">${row.comp}</span>
+                  <span class="font-bold text-[#C6F453]">${row.tech}</span>
                 </div>
               `).join('')}
             </div>
           </div>
-          ${renderFloatingNav('home', false)}
-        </div>
+        </section>
       `;
     }
 
     /* ============================================================
-       SCREEN REGISTRY (ALL 25 SCREENS)
+       SECTION 5: DOWNLOAD & OFFLINE SETUP
        ============================================================ */
-    const SCREENS = [
-      { id: 'onboarding-1', label: '01 · Onboarding 1', render: uid => renderOnboardingStep(0, uid), dark: false },
-      { id: 'onboarding-2', label: '02 · Onboarding 2', render: uid => renderOnboardingStep(1, uid), dark: false },
-      { id: 'onboarding-3', label: '03 · Onboarding 3', render: uid => renderOnboardingStep(2, uid), dark: false },
-      { id: 'register', label: '04 · Registration', render: renderRegistration, dark: false },
-      { id: 'home', label: '05 · Dashboard', render: renderHome, dark: false },
-      { id: 'exams', label: '06 · Exams', render: renderExams, dark: false },
-      { id: 'builder', label: '07 · Exam Builder', render: renderBuilder, dark: false },
-      { id: 'answer-key', label: '08 · Answer Key', render: renderAnswerKey, dark: false },
-      { id: 'generator', label: '09 · Exam Generator', render: renderGenerator, dark: false },
-      { id: 'exam-paper', label: '10 · Exam Paper', render: renderExamPaper, dark: false },
-      { id: 'scan', label: '11 · QR Scanner', render: renderQrScanner, dark: true },
-      { id: 'paper-scan', label: '12 · Paper Scanner', render: renderPaperScanner, dark: true },
-      { id: 'alignment', label: '13 · Alignment', render: renderAlignment, dark: true },
-      { id: 'checking', label: '14 · Auto Check', render: renderChecking, dark: true },
-      { id: 'review', label: '15 · Review', render: renderReview, dark: false },
-      { id: 'history', label: '16 · Scan History', render: renderHistory, dark: true },
-      { id: 'results', label: '17 · Results', render: renderResults, dark: false },
-      { id: 'reports', label: '18 · Reports', render: renderReports, dark: false },
-      { id: 'students', label: '19 · Students', render: renderStudents, dark: false },
-      { id: 'classes', label: '20 · Classes', render: renderClasses, dark: false },
-      { id: 'subjects', label: '21 · Subjects', render: renderSubjects, dark: false },
-      { id: 'backup', label: '22 · Backup & Restore', render: renderBackup, dark: false },
-      { id: 'profile', label: '23 · Profile', render: renderProfile, dark: false },
-      { id: 'settings', label: '24 · Settings', render: renderSettings, dark: false },
-      { id: 'notifications', label: '25 · Device Alerts', render: renderNotifications, dark: false }
-    ];
+    function renderDownloadSection() {
+      return `
+        <section id="download" class="bg-[#111111] text-white py-20">
+          <div class="max-w-[1000px] mx-auto px-5 sm:px-8">
+            <div class="text-center max-w-[640px] mx-auto mb-12">
+              <div class="flex justify-center mb-4">${renderOwlSvg('celebrate', 92, 'dl-owl')}</div>
+              <h2 class="display-section mb-4">
+                <span class="display-light">Download ExamIQ</span>
+                <span class="display-bold">for Android.</span>
+              </h2>
+              <p class="text-sm sm:text-base text-[#94948E]">
+                Standalone offline-first APK. Install once, set up your local teacher profile, and grade exams anywhere without mobile data.
+              </p>
+            </div>
+
+            <div class="notched-card notched-on-dark bg-[#1C1C1C] border border-[#2C2C2C] text-white mb-8">
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                  <div class="text-xs text-[#C6F453] font-semibold">Release v1.0.0 · Android 10+ (ARM64)</div>
+                  <div class="text-2xl sm:text-3xl font-bold tracking-tight mt-1">app-release.apk</div>
+                  <div class="text-xs text-[#94948E] mt-2">Includes OpenCV OMR engine, SQLite storage &amp; local PDF/Excel generator · ~28 MB</div>
+                </div>
+                <button onclick="showToast('Starting download: ExamIQ_v1.0.0_app-release.apk')"
+                  class="px-7 py-3.5 rounded-full bg-[#C6F453] text-[#111111] text-sm font-bold cursor-pointer shrink-0">
+                  Download APK
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 text-[#111111]">
+              <div class="notched-card notched-on-dark bg-[#958BFF]">
+                <div class="text-xs opacity-80">Step 1</div>
+                <div class="text-lg font-bold mt-1">Install on Android</div>
+                <p class="text-xs opacity-85 mt-3 leading-relaxed">Open the downloaded APK and allow installation from your browser or file manager.</p>
+              </div>
+              <div class="notched-card notched-on-dark bg-[#6BD4E6]">
+                <div class="text-xs opacity-80">Step 2</div>
+                <div class="text-lg font-bold mt-1">Create local profile</div>
+                <p class="text-xs opacity-85 mt-3 leading-relaxed">Enter your name, school, and optional 4-digit PIN. No email verification required.</p>
+              </div>
+              <div class="notched-card notched-on-dark bg-[#C6F453]">
+                <div class="text-xs opacity-80">Step 3</div>
+                <div class="text-lg font-bold mt-1">Back up periodically</div>
+                <p class="text-xs opacity-85 mt-3 leading-relaxed">Use Backup &amp; Restore to save a copy of your SQLite .db file to Downloads or Google Drive.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
 
     /* ============================================================
-       BRAND ASSETS REGISTRY (MINIMALIST LOGOS + 6 OWL POSES)
+       SECTION 6: FAQ ACCORDION
        ============================================================ */
-    const LOGO_VARIANTS = [
-      { id: 'logo-dark', variant: 'dark', title: 'Primary App Icon (Dark)', desc: 'Default Android/iOS launcher icon on dark squircle' },
-      { id: 'logo-light', variant: 'light', title: 'Light Surface Icon', desc: 'Warm paper #F5F5F2 squircle for light headers & print' },
-      { id: 'logo-lime', variant: 'lime', title: 'Acid Lime Accent Icon', desc: 'High-visibility badge for splash & marketing' }
-    ];
+    function renderFaqInner() {
+      const faqs = [
+        { q: 'Does ExamIQ require an internet connection to scan or grade papers?', a: 'No. QR identification, OpenCV perspective alignment, OMR bubble checking, SQLite storage, and PDF/Excel report exports all run 100% locally on the teacher\'s phone.' },
+        { q: 'How do I print the generated exam sheets from my phone?', a: 'ExamIQ generates a single batch PDF containing every student\'s unique QR-coded answer sheet. Tap Share / Print to send it to a Wi-Fi printer, USB transfer, email, or messaging app for printing.' },
+        { q: 'What happens if a student shades two bubbles or leaves an item blank?', a: 'The OMR engine automatically flags unclear, blank, or double-shaded items on the Review screen so you can inspect the aligned photo and tap to confirm or override the answer.' },
+        { q: 'How do I keep my records safe if I switch phones?', a: 'Open Profile → Backup & Restore and tap Export local backup (.db). Copy that single file to Google Drive, an SD card, or a computer, then restore it on any new Android device.' },
+        { q: 'Will ExamIQ support circles, checkmarks, or handwritten answers?', a: 'Version 1 prioritizes standardized shaded-bubble multiple-choice OMR for maximum speed and offline reliability. Support for circles, checkmarks, and handwritten OCR is planned for future releases.' }
+      ];
 
-    const OWL_POSES = [
-      { id: 'welcome', title: '01 · Dashboard / Welcome', desc: 'Holding pencil — used on the main Dashboard header' },
-      { id: 'scanning', title: '02 · Scanning Papers', desc: 'Holding mini scanner with pulsing cyan optical beam' },
-      { id: 'checking', title: '03 · Automated Checking', desc: 'Grading an OMR bubble sheet with acid-lime pencil' },
-      { id: 'review', title: '04 · Manual Review', desc: 'Inspecting a flagged answer with magnifying glass' },
-      { id: 'celebrate', title: '05 · Passing / Complete', desc: 'Celebrating completed scans & high passing rates' },
-      { id: 'empty', title: '06 · Empty State', desc: 'Curious shrug holding a blank dashed sheet (no data yet)' }
-    ];
+      return `
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
+          <div>
+            <div class="text-xs font-semibold text-[#6E6E68] mb-3">Support &amp; Documentation</div>
+            <h2 class="display-section">
+              <span class="display-light">Common</span>
+              <span class="display-bold">questions.</span>
+            </h2>
+          </div>
+          ${renderOwlSvg('empty', 84, 'faq-owl')}
+        </div>
+
+        <div class="divide-y divide-[#E4E4DE] border-t border-b border-[#E4E4DE]">
+          ${faqs.map((item, idx) => {
+            const isOpen = state.openFaq === idx;
+            return `
+              <div class="py-5">
+                <button onclick="toggleFaq(${idx})"
+                  class="w-full flex items-center justify-between gap-4 text-left cursor-pointer bg-transparent border-0 p-0">
+                  <span class="text-base font-bold text-[#111111]">${item.q}</span>
+                  <span class="w-8 h-8 rounded-full ${isOpen ? 'bg-[#111111] text-white' : 'bg-[#EAEAE5] text-[#111111]'} flex items-center justify-center text-sm font-bold shrink-0">${isOpen ? '−' : '+'}</span>
+                </button>
+                ${isOpen ? `<p class="text-sm text-[#5C5C56] leading-relaxed mt-3 pr-10">${item.a}</p>` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function renderFaqSection() {
+      return `<section id="faq" class="max-w-[1000px] mx-auto px-5 sm:px-8 py-20">${renderFaqInner()}</section>`;
+    }
+
+    function toggleFaq(idx) {
+      state.openFaq = state.openFaq === idx ? -1 : idx;
+      const el = document.getElementById('faq');
+      if (el) el.innerHTML = renderFaqInner();
+    }
 
     /* ============================================================
-       MAIN RENDER DISPATCHER
+       MAIN ONE-PAGER RENDERER
        ============================================================ */
     function render() {
-      const modes = ['gallery', 'interactive', 'brand'];
-      modes.forEach(m => {
-        const btn = document.getElementById(`btn-mode-${m}`);
-        const sec = document.getElementById(`${m}-workspace`);
-        const active = state.viewMode === m;
-        if (btn) btn.className = `px-3.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors ${active ? 'bg-[#C6F453] text-[#111111]' : 'text-[#94948E] hover:text-white'}`;
-        if (sec) sec.classList.toggle('hidden', !active);
-      });
-
-      if (state.viewMode === 'gallery') renderGallery();
-      else if (state.viewMode === 'interactive') renderInteractive();
-      else renderBrandAssets();
+      const root = document.getElementById('page-root');
+      root.innerHTML =
+        renderOverviewSection() +
+        renderDemoSection() +
+        renderWorkflowSection() +
+        renderAlignmentSection() +
+        renderDownloadSection() +
+        renderFaqSection();
+      updateNavHighlight();
     }
 
-    function renderGallery() {
-      const grid = document.getElementById('gallery-grid');
-      grid.innerHTML = SCREENS.map(s => `
-        <div class="flex flex-col">
-          <div class="flex items-center justify-between px-1 mb-2.5">
-            <span class="text-xs font-medium text-[#A1A19A]">${s.label}</span>
-            <div class="flex items-center gap-2">
-              <button onclick="state.screen='${s.id}'; setViewMode('interactive');" title="Open interactive"
-                class="text-[#8E8E88] hover:text-white cursor-pointer p-1">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-              </button>
-              <button onclick="downloadSingleScreenPng('${s.id}', '${s.label}')" title="Download PNG"
-                class="text-[#8E8E88] hover:text-[#C6F453] cursor-pointer p-1">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              </button>
-            </div>
-          </div>
-          <div id="artboard-${s.id}" class="phone-frame ${s.dark ? 'bg-[#111111] text-white' : 'bg-[#F5F5F2] text-[#111111]'}">
-            ${s.render('gal-' + s.id)}
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function renderInteractive() {
-      const strip = document.getElementById('jump-strip');
-      strip.innerHTML = SCREENS.map(s => `
-        <button onclick="state.screen='${s.id}'; render();"
-          class="px-3 py-1 rounded-full text-[11px] font-semibold cursor-pointer ${state.screen === s.id ? 'bg-[#C6F453] text-[#111111]' : 'bg-[#1C1C1C] text-[#94948E] border border-[#2A2A2A] hover:text-white'}">
-          ${s.label}
-        </button>
-      `).join('');
-
-      const active = SCREENS.find(s => s.id === state.screen) || SCREENS[0];
-      const phone = document.getElementById('interactive-phone');
-      phone.className = `phone-frame ${active.dark ? 'bg-[#111111] text-white' : 'bg-[#F5F5F2] text-[#111111]'}`;
-      phone.innerHTML = active.render('int-' + active.id);
-    }
-
-    function renderBrandAssets() {
-      const btnOn = document.getElementById('btn-owl-anim-on');
-      const btnOff = document.getElementById('btn-owl-anim-off');
-      if (btnOn && btnOff) {
-        btnOn.className = `px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors ${state.animateOwl ? 'bg-[#C6F453] text-[#111111]' : 'text-[#94948E] hover:text-white'}`;
-        btnOff.className = `px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors ${!state.animateOwl ? 'bg-[#C6F453] text-[#111111]' : 'text-[#94948E] hover:text-white'}`;
-      }
-
-      const logoGrid = document.getElementById('logo-grid');
-      logoGrid.innerHTML = LOGO_VARIANTS.map(l => `
-        <div class="rounded-[24px] bg-[#181818] border border-[#262626] p-6 flex flex-col items-center text-center">
-          <div id="asset-${l.id}" class="w-40 h-40 rounded-2xl bg-[#F5F5F2] flex items-center justify-center mb-4">
-            ${renderMinimalLogoSvg(l.variant, 116)}
-          </div>
-          <div class="text-sm font-bold text-white">${l.title}</div>
-          <div class="text-xs text-[#8E8E88] mt-1 mb-4">${l.desc}</div>
-          <div class="flex items-center gap-2 w-full">
-            <button onclick="downloadAssetSvg('asset-${l.id}', '${l.id}')" class="flex-1 py-2 rounded-full bg-[#242424] text-white text-xs font-semibold cursor-pointer hover:bg-[#2E2E2E]">SVG</button>
-            <button onclick="downloadAssetPng('asset-${l.id}', '${l.id}')" class="flex-1 py-2 rounded-full bg-[#C6F453] text-[#111111] text-xs font-bold cursor-pointer">PNG</button>
-          </div>
-        </div>
-      `).join('');
-
-      const posesGrid = document.getElementById('poses-grid');
-      posesGrid.innerHTML = OWL_POSES.map(p => `
-        <div class="rounded-[24px] bg-[#181818] border border-[#262626] p-6 flex flex-col items-center text-center">
-          <div id="asset-owl-${p.id}" class="w-48 h-48 rounded-2xl bg-[#F5F5F2] flex items-center justify-center mb-4">
-            ${renderOwlPoseSvg(p.id, 156, 'brand-' + p.id, state.animateOwl)}
-          </div>
-          <div class="text-sm font-bold text-white">${p.title}</div>
-          <div class="text-xs text-[#8E8E88] mt-1 mb-4">${p.desc}</div>
-          <div class="flex items-center gap-2 w-full">
-            <button onclick="downloadAssetSvg('asset-owl-${p.id}', 'examiq_owl_${p.id}${state.animateOwl ? '_animated' : ''}')" class="flex-1 py-2 rounded-full bg-[#242424] text-white text-xs font-semibold cursor-pointer hover:bg-[#2E2E2E]">${state.animateOwl ? 'Animated SVG' : 'Static SVG'}</button>
-            <button onclick="downloadAssetPng('asset-owl-${p.id}', 'examiq_owl_${p.id}')" class="flex-1 py-2 rounded-full bg-[#C6F453] text-[#111111] text-xs font-bold cursor-pointer">Download PNG</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    /* ============================================================
-       EXPORT UTILITIES (INDIVIDUAL SVG / PNG + FULL ZIP BUNDLES)
-       ============================================================ */
-    function triggerDownload(blob, filename) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
-
-    function downloadAssetSvg(containerId, filename) {
-      const svg = document.querySelector(`#${containerId} svg`);
-      if (!svg) return;
-      const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml;charset=utf-8' });
-      triggerDownload(blob, `${filename}.svg`);
-      showToast(`Saved ${filename}.svg`);
-    }
-
-    async function downloadAssetPng(containerId, filename) {
-      const svg = document.querySelector(`#${containerId} svg`);
-      if (!svg) return;
-      try {
-        const svgData = new XMLSerializer().serializeToString(svg);
-        const img = new Image();
-        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(svgBlob);
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = 1024;
-          canvas.height = 1024;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, 1024, 1024);
-          URL.revokeObjectURL(url);
-          canvas.toBlob(blob => {
-            triggerDownload(blob, `${filename}.png`);
-            showToast(`Saved ${filename}.png (1024×1024 transparent)`);
-          }, 'image/png');
-        };
-        img.src = url;
-      } catch (e) {
-        showToast('PNG export failed — try SVG');
-      }
-    }
-
-    async function downloadAllBrandZip() {
-      const zip = new JSZip();
-      LOGO_VARIANTS.forEach(l => {
-        zip.file(`logo/${l.id}.svg`, renderMinimalLogoSvg(l.variant, 512).trim());
-      });
-      OWL_POSES.forEach(p => {
-        zip.file(`poses/examiq_owl_${p.id}.svg`, renderOwlPoseSvg(p.id, 512, 'zip-' + p.id, state.animateOwl).trim());
-      });
-      const blob = await zip.generateAsync({ type: 'blob' });
-      triggerDownload(blob, 'ExamIQ_Minimal_Logo_and_6_Owl_Poses.zip');
-      showToast('Downloaded ExamIQ_Minimal_Logo_and_6_Owl_Poses.zip');
-    }
-
-    async function downloadSingleScreenPng(screenId, label) {
-      const el = document.getElementById(`artboard-${screenId}`);
-      if (!el) return;
-      try {
-        showToast(`Rendering ${label}...`);
-        const canvas = await html2canvas(el, { scale: 2, backgroundColor: null, useCORS: true });
-        canvas.toBlob(blob => {
-          triggerDownload(blob, `${label.replace(/[^a-z0-9]+/gi, '_')}.png`);
-          showToast(`Saved ${label}.png`);
-        });
-      } catch (e) {
-        showToast('Export failed — try Save HTML instead');
-      }
-    }
-
-    async function downloadAllScreensZip() {
-      if (state.viewMode !== 'gallery') {
-        state.viewMode = 'gallery';
-        render();
-        await new Promise(r => setTimeout(r, 150));
-      }
-      const labelEl = document.getElementById('export-zip-label');
-      try {
-        const zip = new JSZip();
-        for (let i = 0; i < SCREENS.length; i++) {
-          const s = SCREENS[i];
-          labelEl.textContent = `Capturing ${i + 1}/${SCREENS.length}...`;
-          const el = document.getElementById(`artboard-${s.id}`);
-          const canvas = await html2canvas(el, { scale: 2, backgroundColor: null, useCORS: true });
-          const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-          zip.file(`${s.label.replace(/[^a-z0-9]+/gi, '_')}.png`, blob);
-        }
-        labelEl.textContent = 'Packing ZIP...';
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-        triggerDownload(zipBlob, 'ExamIQ_All_25_Mobile_Screens.zip');
-        showToast('Downloaded ExamIQ_All_25_Mobile_Screens.zip');
-      } catch (e) {
-        showToast('ZIP export encountered an error');
-      } finally {
-        labelEl.textContent = 'Download All (.zip)';
-      }
-    }
-
-    function downloadHtmlBundle() {
-      const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-      triggerDownload(new Blob([html], { type: 'text/html' }), 'examiq_25_mobile_screens.html');
-      showToast('Saved standalone HTML file');
-    }
-
+    window.addEventListener('scroll', handleScrollSpy, { passive: true });
     window.onload = function () {
       render();
     };
