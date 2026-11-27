@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ExamIQ — Offline-First Mobile Examination System</title>
-  <link rel="icon" type="image/png" href="./assets/examiq-logo.png" />
-  <link rel="apple-touch-icon" href="./assets/examiq-logo.png" />
+  <link rel="icon" type="image/png" href="/assets/examiq-logo.png" />
+  <link rel="apple-touch-icon" href="/assets/examiq-logo.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -146,7 +146,7 @@
       <!-- 3D Brand Logo Mark -->
       <button onclick="scrollToSection('overview')" class="flex items-center gap-2.5 cursor-pointer bg-transparent border-0 p-0 shrink-0">
         <img
-          src="./assets/examiq-logo.png"
+          src="/assets/examiq-logo.png"
           alt="ExamIQ 3D Logo"
           class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] object-cover shrink-0 shadow-[0_2px_8px_rgba(17,17,17,0.12)]"
         />
@@ -199,7 +199,7 @@
       <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-7 sm:pb-8 hairline-dark-b">
         <div class="flex items-center gap-3">
           <img
-            src="./assets/examiq-logo.png"
+            src="/assets/examiq-logo.png"
             alt="ExamIQ 3D Logo"
             class="w-10 h-10 rounded-[11px] object-cover shrink-0 ring-1 ring-white/10"
           />
@@ -219,8 +219,8 @@
       </div>
 
       <div class="pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-[#8E8E88] leading-relaxed">
-        <span>Built for Android · React Native CLI · OpenCV · SQLite</span>
-        <span>© 2026 ExamIQ. All records stay on the teacher's device.</span>
+        <span>Built for Android · React Native CLI · CameraX · ML Kit · Native Kotlin OMR · SQLite</span>
+        <span>© 2026 ExamIQ by Andrei Obligar · RA 10173 Offline-First</span>
       </div>
     </div>
   </footer>
@@ -260,7 +260,7 @@
     }
 
     function scrollToSection(sectionId) {
-      state.activeSection = sectionId;
+      state.activeSection = sectionId === 'demo' ? 'overview' : sectionId;
       updateNavHighlight();
       const target = document.getElementById(sectionId);
       if (target) {
@@ -501,8 +501,7 @@
           <div class="flex items-center justify-between mb-4">
             <div class="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-[0_1px_2px_rgba(17,17,17,0.04)]">
               <svg class="w-4 h-4 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="8" r="3.5"/>
-                <path d="M5.5 19.5c1.5-3.2 4-4.5 6.5-4.5s5 1.3 6.5 4.5"/>
+                <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>
               </svg>
             </div>
             <div class="w-9 h-9 rounded-full bg-white flex items-center justify-center relative shadow-[0_1px_2px_rgba(17,17,17,0.04)]">
@@ -521,7 +520,7 @@
               <span class="block font-bold">paper to check</span>
             </div>
             <img
-              src="./assets/owl-writing.png"
+              src="/assets/owl-writing.png"
               alt="ExamIQ Owl Mascot"
               class="w-[52px] h-[52px] min-[375px]:w-[60px] min-[375px]:h-[60px] object-contain shrink-0"
               loading="eager"
@@ -649,7 +648,7 @@
             <div class="lg:col-span-7">
               <div class="flex items-center gap-3 mb-4 sm:mb-6">
                 <div class="w-11 h-11 sm:w-16 sm:h-16 shrink-0 owl-fluid">${renderOwlSvg('welcome', 64, 'hero-owl')}</div>
-                <div class="text-xs font-semibold text-[#6E6E68] leading-snug">Android-first · Offline SQLite + OpenCV OMR</div>
+                <div class="text-xs font-semibold text-[#6E6E68] leading-snug">Android-first · Offline SQLite + Native Kotlin OMR</div>
               </div>
 
               <h1 class="display-hero mb-4 sm:mb-5">
@@ -700,25 +699,25 @@
             <div onclick="scrollToSection('workflow')" class="notched-card bg-[#958BFF] cursor-pointer transition-transform hover:-translate-y-0.5">
               <div class="text-xs opacity-80">01 · Prepare</div>
               <div class="text-lg sm:text-xl font-bold tracking-tight mt-1">QR Answer Sheets</div>
-              <p class="text-xs opacity-85 leading-relaxed mt-3 sm:mt-4">Generate printable A4 bubble sheets with unique student QR codes and 4 corner registration marks.</p>
+              <p class="text-xs opacity-85 leading-relaxed mt-3 sm:mt-4">Generate printable A4, Short, or Long bubble sheets with unique student QR codes, row timing ticks, and 4 corner marks.</p>
             </div>
 
             <div onclick="scrollToSection('alignment')" class="notched-card bg-[#6BD4E6] cursor-pointer transition-transform hover:-translate-y-0.5">
               <div class="text-xs opacity-80">02 · Align</div>
-              <div class="text-lg sm:text-xl font-bold tracking-tight mt-1">OpenCV Warp</div>
-              <p class="text-xs opacity-85 leading-relaxed mt-3 sm:mt-4">Automatically detects corner markers and fixes rotation or angle skew before checking begins.</p>
+              <div class="text-lg sm:text-xl font-bold tracking-tight mt-1">Perspective Warp</div>
+              <p class="text-xs opacity-85 leading-relaxed mt-3 sm:mt-4">Automatically detects 4 corner fiducial marks and fixes rotation or angle skew natively on-device before checking.</p>
             </div>
 
             <div onclick="scrollToSection('demo')" class="notched-card bg-[#C6F453] cursor-pointer transition-transform hover:-translate-y-0.5">
               <div class="text-xs opacity-80">03 · Grade</div>
-              <div class="text-lg sm:text-xl font-bold tracking-tight mt-1">On-Device OMR</div>
-              <p class="text-xs opacity-85 leading-relaxed mt-3 sm:mt-4">Recognizes shaded bubbles, compares against your local answer key, and flags unclear items.</p>
+              <div class="text-lg sm:text-xl font-bold tracking-tight mt-1">OMR + Essay</div>
+              <p class="text-xs opacity-85 leading-relaxed mt-3 sm:mt-4">Auto-grades shaded bubbles against your answer key, flags half-shaded or double marks, and lets teachers add manual essay scores.</p>
             </div>
 
             <div onclick="scrollToSection('download')" class="notched-card bg-[#F67D56] cursor-pointer transition-transform hover:-translate-y-0.5">
               <div class="text-xs opacity-80">04 · Export</div>
-              <div class="text-lg sm:text-xl font-bold tracking-tight mt-1">Excel &amp; PDF Reports</div>
-              <p class="text-xs opacity-85 leading-relaxed mt-3 sm:mt-4">Export class grade sheets, passing rate summaries, and full SQLite database backups offline.</p>
+              <div class="text-lg sm:text-xl font-bold tracking-tight mt-1">CSV &amp; PDF Reports</div>
+              <p class="text-xs opacity-85 leading-relaxed mt-3 sm:mt-4">Export Excel-ready CSV grade sheets, multi-page PDF passing summaries, and portable SQLite database backups offline.</p>
             </div>
           </div>
         </section>
@@ -744,21 +743,21 @@
               <span class="display-bold">alignment &amp; review.</span>
             </h2>
             <p class="text-xs sm:text-sm text-[#94948E] max-w-[420px] leading-relaxed">
-              Toggle OpenCV perspective correction and tap any flagged answer tile to verify Juan Dela Cruz's score live.
+              Toggle 4-point perspective correction and tap any flagged answer tile to verify Juan Dela Cruz's score live.
             </p>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-8 items-start">
-            <!-- Left: OpenCV Alignment Interactive Preview -->
+            <!-- Left: Native Perspective Warp Interactive Preview -->
             <div class="rounded-[24px] sm:rounded-[28px] bg-[#181818] border border-[#262626] p-4 sm:p-8">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
                 <div>
-                  <div class="text-sm font-bold">OpenCV perspective warp</div>
+                  <div class="text-sm font-bold">4-point perspective warp</div>
                   <div class="text-xs text-[#8E8E88] mt-0.5">4 / 4 corner registration marks detected</div>
                 </div>
                 <div class="inline-flex self-start sm:self-auto items-center bg-[#111111] p-1 rounded-full border border-[#2A2A2A] shrink-0">
                   <button onclick="setDemoAligned(false)"
-                    class="px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold cursor-pointer whitespace-nowrap ${!state.demoAligned ? 'bg-[#C6F453] text-[#111111]' : 'text-[#94948E]'}">Raw (-4.2°)</button>
+                    class="px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold cursor-pointer whitespace-nowrap ${!state.demoAligned ? 'bg-[#C6F453] text-[#111111]' : 'text-[#94948E]'}">Raw (-4.5°)</button>
                   <button onclick="setDemoAligned(true)"
                     class="px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold cursor-pointer whitespace-nowrap ${state.demoAligned ? 'bg-[#C6F453] text-[#111111]' : 'text-[#94948E]'}">Aligned (0.0°)</button>
                 </div>
@@ -882,11 +881,11 @@
        ============================================================ */
     function renderWorkflowSection() {
       const steps = [
-        { num: '01', color: '#958BFF', pose: 'welcome', title: 'Set up your local profile & rosters', desc: 'Create your teacher profile directly on your phone. Add or import CSV student rosters, grade levels, sections, and subjects into SQLite.' },
-        { num: '02', color: '#C6F453', pose: 'checking', title: 'Build exams & configure answer keys', desc: 'Create multiple-choice exams from scratch or import existing files. Tap answer-key tiles to set correct answers and points per item.' },
-        { num: '03', color: '#6BD4E6', pose: 'scanning', title: 'Print unique QR sheets & scan papers', desc: 'Generate printable A4 PDFs with a unique QR code per student. Scan completed papers with automatic QR identification and OpenCV alignment.' },
-        { num: '04', color: '#F67D56', pose: 'review', title: 'Verify flagged answers manually', desc: 'Blank or double-shaded bubbles are highlighted immediately so teachers can inspect and override them in one tap.' },
-        { num: '05', color: '#111111', pose: 'celebrate', dark: true, title: 'View analytics & export local reports', desc: 'Track subject and class passing rates (≥75%) and export ready-to-submit Excel (.xlsx) and PDF reports without an internet connection.' }
+        { num: '01', color: '#958BFF', pose: 'welcome', title: 'Set up your local profile & rosters', desc: 'Create your teacher profile directly on your phone. Add students manually or import Excel (.xlsx) and CSV class lists, grade levels, sections, and subjects into SQLite.' },
+        { num: '02', color: '#C6F453', pose: 'checking', title: 'Build hybrid exams & configure answer keys', desc: 'Create Multiple Choice (OMR) and manual Essay questions with rubrics, paste structured question lines, and set answer keys and points per item.' },
+        { num: '03', color: '#6BD4E6', pose: 'scanning', title: 'Print unique QR sheets & scan papers', desc: 'Generate printable A4, Short, or Long PDFs with a unique QR code per student. Scan completed papers with offline ML Kit QR identification and 4-point perspective alignment.' },
+        { num: '04', color: '#F67D56', pose: 'review', title: 'Verify flagged answers & add essay scores', desc: 'Blank, half-shaded, ink-spilled, or double-shaded bubbles are flagged automatically for 1-tap teacher review alongside manual essay grading.' },
+        { num: '05', color: '#111111', pose: 'celebrate', dark: true, title: 'View analytics & export local reports', desc: 'Track passing rates (≥75%) by year, class/section, and subject, and export Excel-ready CSV grade sheets and multi-page PDF summaries completely offline.' }
       ];
 
       return `
@@ -925,12 +924,12 @@
        ============================================================ */
     function renderAlignmentSection() {
       const stack = [
-        { comp: 'Image capture', tech: 'React Native CLI Camera' },
-        { comp: 'Registration mark detection', tech: 'OpenCV (On-device)' },
-        { comp: 'Image correction', tech: '4-point perspective transformation' },
-        { comp: 'Template alignment', tech: 'Standardized A4 bubble coordinates' },
-        { comp: 'Answer detection', tech: 'Shaded-bubble OMR thresholding' },
-        { comp: 'Answer comparison & storage', tech: 'Local SQLite database' }
+        { comp: 'Live camera & still capture', tech: 'Android CameraX (1.4.2)' },
+        { comp: 'Offline QR code verification', tech: 'ML Kit Barcode Scanning (On-device)' },
+        { comp: 'Registration & perspective warp', tech: '4-point Matrix.setPolyToPoly + Timing Ticks' },
+        { comp: 'Template layouts', tech: 'A4, Short (Letter) & Long (Folio) · Template V2' },
+        { comp: 'Answer detection', tech: 'Native Kotlin Adaptive OMR + Ink-Spill Analysis' },
+        { comp: 'Answer comparison & storage', tech: 'Local Android SQLite Database' }
       ];
 
       return `
@@ -943,35 +942,35 @@
                 <span class="display-bold">scanned at an angle.</span>
               </h2>
               <p class="text-sm sm:text-base text-[#5C5C56] leading-relaxed mb-6 sm:mb-8">
-                Every ExamIQ sheet includes four high-contrast corner registration marks. Before OMR reads a single bubble, OpenCV locates those four corners and warps the photo back to a flat, standardized coordinate grid.
+                Every ExamIQ sheet includes four high-contrast corner fiducial marks and per-row timing ticks. Before OMR reads a single bubble, the native Android engine locates all four corners and warps the photo back to a flat, standardized coordinate grid.
               </p>
 
               <div class="divide-y divide-[#E4E4DE]">
                 <div class="py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 text-sm">
                   <span class="font-bold">1. Standardized Answer Sheet</span>
-                  <span class="text-xs sm:text-sm text-[#6E6E68] sm:text-right">Fixed bubble grid, QR code &amp; 4 corner marks</span>
+                  <span class="text-xs sm:text-sm text-[#6E6E68] sm:text-right">A4 / Short / Long grid, QR code &amp; 4 corner marks</span>
                 </div>
                 <div class="py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 text-sm">
-                  <span class="font-bold">2. Camera Scanning</span>
-                  <span class="text-xs sm:text-sm text-[#6E6E68] sm:text-right">Teacher captures completed sheet on Android</span>
+                  <span class="font-bold">2. CameraX Scanning</span>
+                  <span class="text-xs sm:text-sm text-[#6E6E68] sm:text-right">Live corner lock &amp; offline QR verification on Android</span>
                 </div>
                 <div class="py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 text-sm">
-                  <span class="font-bold">3. OpenCV Perspective Warp</span>
-                  <span class="text-xs sm:text-sm text-[#6E6E68] sm:text-right">Corrects rotation, tilt &amp; lens distortion</span>
+                  <span class="font-bold">3. 4-Point Perspective Warp</span>
+                  <span class="text-xs sm:text-sm text-[#6E6E68] sm:text-right">Corrects rotation, tilt &amp; row timing drift natively</span>
                 </div>
                 <div class="py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 text-sm">
-                  <span class="font-bold">4. OMR Bubble Detection</span>
-                  <span class="text-xs sm:text-sm text-[#6E6E68] sm:text-right">Maps exact bubble coordinates &amp; flags blanks</span>
+                  <span class="font-bold">4. Adaptive OMR Detection</span>
+                  <span class="text-xs sm:text-sm text-[#6E6E68] sm:text-right">Flags blank, half-shaded, ink-spilled &amp; double marks</span>
                 </div>
               </div>
             </div>
 
-            <!-- Standardized A4 Paper Preview -->
+            <!-- Standardized Paper Preview -->
             <div class="lg:col-span-5 flex justify-center">
               <div class="w-full max-w-[360px] bg-white border border-[#D4D4CE] rounded-[24px] p-4 sm:p-6 shadow-[0_8px_28px_rgba(17,17,17,0.05)]">
                 <div class="flex items-center justify-between mb-3 gap-2">
                   <span class="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-[#111111] shrink-0"></span>
-                  <span class="text-[8px] sm:text-[9px] uppercase tracking-widest text-[#6E6E68] font-semibold text-center">OMR Registration Template · v1</span>
+                  <span class="text-[8px] sm:text-[9px] uppercase tracking-widest text-[#6E6E68] font-semibold text-center">OMR Registration Template · V2</span>
                   <span class="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-[#111111] shrink-0"></span>
                 </div>
 
@@ -1046,14 +1045,14 @@
             <div class="notched-card notched-on-dark bg-[#1C1C1C] border border-[#2C2C2C] text-white mb-5 sm:mb-8">
               <div class="flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
                 <div class="min-w-0">
-                  <div class="text-xs text-[#C6F453] font-semibold">Release v1.0.0 · Android 10+ (ARM64)</div>
+                  <div class="text-xs text-[#C6F453] font-semibold">Release v1.0.0 · Android 7.0+ (API 24+)</div>
                   <div class="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight mt-1">ExamIQ</div>
-                  <div class="text-xs text-[#94948E] mt-2 leading-relaxed">Includes OpenCV OMR engine, SQLite storage &amp; local PDF/Excel generator · ~28 MB</div>
+                  <div class="text-xs text-[#94948E] mt-2 leading-relaxed">Includes native CameraX + ML Kit OMR engine, SQLite storage &amp; offline PDF/CSV generator</div>
                 </div>
-                <button onclick="showToast('Starting download: ExamIQ.apk')"
-                  class="w-full md:w-auto px-7 py-3.5 rounded-full bg-[#C6F453] text-[#111111] text-sm font-bold cursor-pointer hover:opacity-95 transition-opacity shrink-0 text-center">
+                <a href="https://github.com/andweigo/examiq/releases" target="_blank" rel="noopener noreferrer"
+                  class="w-full md:w-auto px-7 py-3.5 rounded-full bg-[#C6F453] text-[#111111] text-sm font-bold cursor-pointer hover:opacity-95 transition-opacity shrink-0 text-center no-underline">
                   Download APK
-                </button>
+                </a>
               </div>
             </div>
 
@@ -1066,12 +1065,12 @@
               <div class="notched-card notched-on-dark bg-[#6BD4E6]">
                 <div class="text-xs opacity-80">Step 2</div>
                 <div class="text-lg font-bold mt-1">Create local profile</div>
-                <p class="text-xs opacity-85 mt-3 leading-relaxed">Enter your name, school, and optional 4-digit PIN. No email verification required.</p>
+                <p class="text-xs opacity-85 mt-3 leading-relaxed">Enter your name, school, and optional 4–6 digit PIN. No email verification required.</p>
               </div>
               <div class="notched-card notched-on-dark bg-[#C6F453]">
                 <div class="text-xs opacity-80">Step 3</div>
                 <div class="text-lg font-bold mt-1">Back up periodically</div>
-                <p class="text-xs opacity-85 mt-3 leading-relaxed">Use Backup &amp; Restore to save a copy of your SQLite .db file to Downloads or Google Drive.</p>
+                <p class="text-xs opacity-85 mt-3 leading-relaxed">Use Backup &amp; Restore to save a portable copy of your SQLite .db file to Downloads or Google Drive.</p>
               </div>
             </div>
           </div>
@@ -1084,11 +1083,11 @@
        ============================================================ */
     function renderFaqInner() {
       const faqs = [
-        { q: 'Does ExamIQ require an internet connection to scan or grade papers?', a: 'No. QR identification, OpenCV perspective alignment, OMR bubble checking, SQLite storage, and PDF/Excel report exports all run 100% locally on the teacher\'s phone.' },
-        { q: 'How do I print the generated exam sheets from my phone?', a: 'ExamIQ generates a single batch PDF containing every student\'s unique QR-coded answer sheet. Tap Share / Print to send it to a Wi-Fi printer, USB transfer, email, or messaging app for printing.' },
-        { q: 'What happens if a student shades two bubbles or leaves an item blank?', a: 'The OMR engine automatically flags unclear, blank, or double-shaded items on the Review screen so you can inspect the aligned photo and tap to confirm or override the answer.' },
-        { q: 'How do I keep my records safe if I switch phones?', a: 'Open Profile → Backup & Restore and tap Export local backup (.db). Copy that single file to Google Drive, an SD card, or a computer, then restore it on any new Android device.' },
-        { q: 'Will ExamIQ support circles, checkmarks, or handwritten answers?', a: 'Version 1 prioritizes standardized shaded-bubble multiple-choice OMR for maximum speed and offline reliability. Support for circles, checkmarks, and handwritten OCR is planned for future releases.' }
+        { q: 'Does ExamIQ require an internet connection to scan or grade papers?', a: 'No. Offline ML Kit QR identification, 4-point perspective alignment, native Kotlin OMR bubble checking, SQLite storage, and PDF/CSV report exports all run 100% locally on the teacher\'s phone.' },
+        { q: 'How do I print the generated exam sheets from my phone?', a: 'ExamIQ generates printable A4, Short (Letter), or Long (Folio) batch PDFs containing every student\'s unique QR-coded answer sheet, question sheet, or full exam. Tap Share / Print to send it to any printer.' },
+        { q: 'What happens if a student shades two bubbles, spills ink, or leaves an item blank?', a: 'The OMR engine automatically flags blank, half-shaded, ink-spilled, or double-shaded items on the Review screen so you can inspect the aligned photo and tap to confirm or override the answer.' },
+        { q: 'How do I keep my records safe if I switch phones?', a: 'Open Profile → Backup & Restore and tap Export local backup (.db). Copy that portable SQLite file to Google Drive, an SD card, or a computer, then restore it on any Android device.' },
+        { q: 'Does ExamIQ support Essay questions alongside Multiple Choice?', a: 'Yes! Teachers can combine auto-graded Multiple Choice (OMR) items with Essay questions (including rubrics and ruled writing lines on printed sheets) and record manual essay scores directly on each student\'s review screen.' }
       ];
 
       return `

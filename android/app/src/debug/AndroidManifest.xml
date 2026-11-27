@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- INTERNET permission is restricted to debug builds only (Metro bundler / dev server). Release APKs remain 100% offline. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>

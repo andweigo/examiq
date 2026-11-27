@@ -35,7 +35,13 @@ type PreviewTab = 'answer-sheet' | 'question-sheet';
 export const ExamPaperScreen: React.FC = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const {selectedExam, questions, service: examService} = useExams();
+  const {
+    selectedExam,
+    questions,
+    pointsPerItem,
+    essayMaxPoints,
+    service: examService,
+  } = useExams();
   const {selectedGeneratorStudent} = useRoster(selectedExam.section);
   const {teacher, service: profileService} = useProfileSettings();
   const {service: scanningService} = useScanning();
@@ -67,15 +73,34 @@ export const ExamPaperScreen: React.FC = () => {
     Math.ceil(questions.length / (paperSize === 'LONG' ? 12 : paperSize === 'SHORT' ? 9 : 10)),
   );
 
+  const currentYear = new Date().getFullYear();
+  const formattedExamDate = /\b20\d{2}\b/.test(selectedExam.date)
+    ? selectedExam.date
+    : `${selectedExam.date}, ${currentYear}`;
+  const hasValidExam = Boolean(selectedExam.id);
+
   const assignmentId = `${selectedExam.id}-${selectedGeneratorStudent.id}`;
-  const qrString = qrCodec.encode({
-    version: 2,
+  const qrString = useMemo(() => {
+    if (!hasValidExam || !selectedGeneratorStudent.id) {
+      return '';
+    }
+    return qrCodec.encode({
+      version: 2,
+      assignmentId,
+      examId: selectedExam.id,
+      studentId: selectedGeneratorStudent.id,
+      paperSize,
+      itemCount: exactItemCount,
+    });
+  }, [
+    hasValidExam,
+    qrCodec,
     assignmentId,
-    examId: selectedExam.id,
-    studentId: selectedGeneratorStudent.id,
+    selectedExam.id,
+    selectedGeneratorStudent.id,
     paperSize,
-    itemCount: exactItemCount,
-  });
+    exactItemCount,
+  ]);
 
   const handleChangePaperSize = (nextSize: PaperSize) => {
     const hadSheets = examService.hasGeneratedSheets(selectedExam.id);
@@ -119,7 +144,7 @@ export const ExamPaperScreen: React.FC = () => {
       });
 
       if (pdf) {
-        profileService.recordExport(pdf.fileName);
+        profileService.recordExport(pdf.fileName, pdf.filePath, 'application/pdf');
         showToast(pdf.savedToDownloads ? 'Saved to Downloads' : 'PDF ready');
         await pdfEngine.shareFile(pdf.filePath, 'application/pdf', pdf.fileName);
         return;
@@ -129,9 +154,12 @@ export const ExamPaperScreen: React.FC = () => {
         exportMode === 'questions-only'
           ? [
               `${selectedExam.subject} · ${selectedExam.term} — Question Sheet (${paperSpec.label})`,
-              ...questions.map(
-                q =>
-                  `${q.num}. ${q.text}\n   A. ${q.choices[0]}  B. ${q.choices[1]}  C. ${q.choices[2]}  D. ${q.choices[3]}`,
+              ...questions.map(q =>
+                q.kind === 'essay'
+                  ? `${q.num}. ${q.text} (${q.maxPoints ?? 10} pts · Essay)${
+                      q.rubric ? `\n   Rubric: ${q.rubric}` : ''
+                    }`
+                  : `${q.num}. ${q.text}\n   A. ${q.choices[0]}  B. ${q.choices[1]}  C. ${q.choices[2]}  D. ${q.choices[3]}`,
               ),
             ].join('\n\n')
           : [
@@ -316,7 +344,7 @@ export const ExamPaperScreen: React.FC = () => {
                   ID: {selectedGeneratorStudent.id}
                 </Text>
                 <Text style={styles.metaLine} numberOfLines={1}>
-                  {selectedGeneratorStudent.section} · {selectedExam.date}, 2026
+                  {selectedGeneratorStudent.section} · {formattedExamDate}
                 </Text>
               </View>
               <QrMatrixSvg seed={qrString} size={paperVisual.qrSize} />
@@ -360,7 +388,7 @@ export const ExamPaperScreen: React.FC = () => {
                 {selectedExam.subject} · {selectedExam.term}
               </Text>
               <Text style={styles.qMetaLine}>
-                {selectedExam.section} · {selectedExam.date}, 2026 ·{' '}
+                {selectedExam.section} · {formattedExamDate} ·{' '}
                 {paperSpec.shortLabel}
               </Text>
 
@@ -369,7 +397,8 @@ export const ExamPaperScreen: React.FC = () => {
                   Name: ______________________
                 </Text>
                 <Text style={styles.qStripText}>
-                  Score: ____ / {questions.length || exactItemCount}
+                  Score: ____ /{' '}
+                  {exactItemCount * pointsPerItem + essayMaxPoints}
                 </Text>
               </View>
             </View>

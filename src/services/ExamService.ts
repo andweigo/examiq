@@ -1,3 +1,4 @@
+import {MAX_OMR_ITEM_COUNT} from '@constants/grading';
 import {BUBBLE_CHOICES, OMR_TEMPLATE_VERSION} from '@constants/omr';
 import {ObservableStore} from '@core/base/ObservableStore';
 import {BubbleChoice, PaperSize, PointWeight} from '@core/types/common';
@@ -11,6 +12,7 @@ import {
   QuestionKind,
 } from '@data/database/SeedData';
 import {ChecksumUtil} from '@utils/ChecksumUtil';
+import {DateFormatter} from '@utils/DateFormatter';
 import {IdGenerator} from '@utils/IdGenerator';
 
 export interface CreateExamInput {
@@ -224,7 +226,9 @@ export class ExamService extends ObservableStore<ExamState> {
       subject: input.subject.trim(),
       term: input.term.trim() || 'Quiz',
       section: input.section.trim(),
-      date: input.date.trim() || 'Nov 27',
+      date:
+        input.date.trim() ||
+        DateFormatter.toShortDate(new Date().toISOString()),
       scanned: 0,
       total: Math.max(1, input.totalStudents),
       color: input.color,
@@ -347,12 +351,72 @@ export class ExamService extends ObservableStore<ExamState> {
         prev.selectedExamId === examId
           ? remaining[0]?.id ?? ''
           : prev.selectedExamId;
+      const nextQuestions = {...prev.questionsByExamId};
+      const nextKeys = {...prev.answerKeysByExamId};
+      const nextPoints = {...prev.pointsByExamId};
+      const nextAssignments = {...prev.assignmentsByExamId};
+      const nextOverlays = {...prev.overlaysByExamId};
+      delete nextQuestions[examId];
+      delete nextKeys[examId];
+      delete nextPoints[examId];
+      delete nextAssignments[examId];
+      delete nextOverlays[examId];
       return {
         ...prev,
         exams: remaining,
         selectedExamId: nextSelected,
+        questionsByExamId: nextQuestions,
+        answerKeysByExamId: nextKeys,
+        pointsByExamId: nextPoints,
+        assignmentsByExamId: nextAssignments,
+        overlaysByExamId: nextOverlays,
       };
     });
+  }
+
+  /**
+   * Ensures an exam that has Answer Key items also has matching editable MCQ question slots
+   * in the Exam Builder so editing an existing exam never appears empty.
+   */
+  public ensureQuestionsFromAnswerKey(examId?: string): number {
+    const targetId = examId ?? this.getState().selectedExamId;
+    if (!targetId) {
+      return 0;
+    }
+    const key = this.getAnswerKey(targetId);
+    const existing = this.getQuestions(targetId);
+    const existingMcqCount = existing.filter(q => q.kind !== 'essay').length;
+    if (key.length === 0 || existingMcqCount >= key.length) {
+      return 0;
+    }
+
+    const toAddCount = key.length - existingMcqCount;
+    this.setState(prev => {
+      const prevQuestions = prev.questionsByExamId[targetId] ?? [];
+      const currentMcqs = prevQuestions.filter(q => q.kind !== 'essay').length;
+      const missing: BuilderQuestionView[] = [];
+      for (let i = currentMcqs; i < key.length; i += 1) {
+        missing.push({
+          num: prevQuestions.length + missing.length + 1,
+          kind: 'mcq',
+          text: `Question ${i + 1}`,
+          choices: ['Choice A', 'Choice B', 'Choice C', 'Choice D'],
+          answer: key[i] ?? 'A',
+        });
+      }
+      return {
+        ...prev,
+        questionsByExamId: {
+          ...prev.questionsByExamId,
+          [targetId]: [...prevQuestions, ...missing].map((q, idx) => ({
+            ...q,
+            num: idx + 1,
+          })),
+        },
+      };
+    });
+
+    return toAddCount;
   }
 
   public addQuestion(
@@ -386,13 +450,23 @@ export class ExamService extends ObservableStore<ExamState> {
         : {
             num: nextNum,
             kind: 'mcq',
-            text: prompt?.trim() || 'Solve for y: 3y - 6 = 15',
-            choices: choices ?? ['5', '7', '8', '9'],
+            text: prompt?.trim() || `Question ${nextNum}`,
+            choices: choices ?? ['Choice A', 'Choice B', 'Choice C', 'Choice D'],
             answer,
           };
 
+    if (!examId) {
+      return item;
+    }
+
     this.setState(prev => {
       const prevQuestions = prev.questionsByExamId[examId] ?? [];
+      if (kind !== 'essay') {
+        const currentMcqs = prevQuestions.filter(q => q.kind !== 'essay').length;
+        if (currentMcqs >= MAX_OMR_ITEM_COUNT) {
+          return prev;
+        }
+      }
       const nextQuestions = [...prevQuestions, item];
 
       // Essay items are graded manually by the teacher and never add OMR bubbles
@@ -411,12 +485,15 @@ export class ExamService extends ObservableStore<ExamState> {
 
       if (mcqIndex < prevKey.length) {
         prevKey[mcqIndex] = answer;
-      } else {
+      } else if (prevKey.length < MAX_OMR_ITEM_COUNT) {
         prevKey.push(answer);
       }
 
       const nextMcqCount = mcqIndex + 1;
-      const nextItemCount = Math.max(prevKey.length, nextMcqCount);
+      const nextItemCount = Math.min(
+        MAX_OMR_ITEM_COUNT,
+        Math.max(prevKey.length, nextMcqCount),
+      );
       const targetExam = prev.exams.find(e => e.id === examId);
       const paperSize = targetExam?.paperSize ?? 'A4';
 
@@ -431,7 +508,7 @@ export class ExamService extends ObservableStore<ExamState> {
         },
         answerKeysByExamId: {
           ...prev.answerKeysByExamId,
-          [examId]: prevKey,
+          [examId]: prevKey.slice(0, nextItemCount),
         },
         overlaysByExamId: {
           ...prev.overlaysByExamId,
@@ -455,8 +532,12 @@ export class ExamService extends ObservableStore<ExamState> {
     },
   ): void {
     const examId = this.getState().selectedExamId;
+    if (!examId) {
+      return;
+    }
     this.setState(prev => {
       const list = prev.questionsByExamId[examId] ?? [];
+      const prevMcqCount = list.filter(q => q.kind !== 'essay').length;
       const updated = list.map((q, idx) => {
         if (idx !== questionIndex) {
           return q;
@@ -485,18 +566,49 @@ export class ExamService extends ObservableStore<ExamState> {
 
       const prevKey = [...(prev.answerKeysByExamId[examId] ?? [])];
       const mcqQuestions = updated.filter(q => q.kind !== 'essay');
-      mcqQuestions.forEach((mcq, mIdx) => {
-        if (mIdx < prevKey.length) {
-          prevKey[mIdx] = mcq.answer;
-        } else {
-          prevKey.push(mcq.answer);
-        }
-      });
+      const kindCountChanged = mcqQuestions.length !== prevMcqCount;
+
+      let nextKey: BubbleChoice[];
+      if (kindCountChanged && mcqQuestions.length > 0) {
+        nextKey = mcqQuestions
+          .slice(0, MAX_OMR_ITEM_COUNT)
+          .map(mcq => mcq.answer);
+      } else {
+        nextKey = [...prevKey];
+        mcqQuestions.forEach((mcq, mIdx) => {
+          if (mIdx < nextKey.length) {
+            nextKey[mIdx] = mcq.answer;
+          } else if (nextKey.length < MAX_OMR_ITEM_COUNT) {
+            nextKey.push(mcq.answer);
+          }
+        });
+      }
+
+      const nextItemCount = Math.max(
+        1,
+        Math.min(MAX_OMR_ITEM_COUNT, nextKey.length || 1),
+      );
+      const targetExam = prev.exams.find(e => e.id === examId);
+      const paperSize = targetExam?.paperSize ?? 'A4';
 
       return {
         ...prev,
+        exams: kindCountChanged
+          ? prev.exams.map(e =>
+              e.id === examId ? {...e, items: nextItemCount} : e,
+            )
+          : prev.exams,
         questionsByExamId: {...prev.questionsByExamId, [examId]: updated},
-        answerKeysByExamId: {...prev.answerKeysByExamId, [examId]: prevKey},
+        answerKeysByExamId: {
+          ...prev.answerKeysByExamId,
+          [examId]: nextKey.slice(0, nextItemCount),
+        },
+        overlaysByExamId: kindCountChanged
+          ? {
+              ...prev.overlaysByExamId,
+              [examId]: createOverlaySpec(examId, paperSize, nextItemCount),
+            }
+          : prev.overlaysByExamId,
       };
     });
   }
@@ -757,16 +869,49 @@ export class ExamService extends ObservableStore<ExamState> {
     }));
   }
 
-  public recordScanConfirmed(examId: string): void {
+  public renameSection(previousLabel: string, nextLabel: string): void {
+    const prevKey = previousLabel.trim().toLowerCase();
+    const cleanNext = nextLabel.trim();
+    if (!prevKey || !cleanNext || prevKey === cleanNext.toLowerCase()) {
+      return;
+    }
+    this.setState(prev => ({
+      ...prev,
+      exams: prev.exams.map(e =>
+        e.section.trim().toLowerCase() === prevKey
+          ? {...e, section: cleanNext}
+          : e,
+      ),
+    }));
+  }
+
+  public recordScanFlagged(examId: string): void {
+    this.setState(prev => ({
+      ...prev,
+      exams: prev.exams.map(e =>
+        e.id === examId
+          ? {...e, needsReviewCount: e.needsReviewCount + 1}
+          : e,
+      ),
+    }));
+  }
+
+  public recordScanConfirmed(
+    examId: string,
+    alreadyConfirmed = false,
+  ): void {
     this.setState(prev => ({
       ...prev,
       exams: prev.exams.map(e => {
         if (e.id !== examId) {
           return e;
         }
+        const nextScanned = alreadyConfirmed
+          ? e.scanned
+          : Math.min(e.total, e.scanned + (e.scanned < e.total ? 1 : 0));
         return {
           ...e,
-          scanned: Math.min(e.total, e.scanned + (e.scanned < e.total ? 1 : 0)),
+          scanned: nextScanned,
           needsReviewCount: Math.max(0, e.needsReviewCount - 1),
         };
       }),

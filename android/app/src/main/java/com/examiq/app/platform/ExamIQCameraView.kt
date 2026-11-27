@@ -64,12 +64,13 @@ class ExamIQCameraView(context: Context) : FrameLayout(context) {
   }
 
   private val analysisExecutor: ExecutorService = Executors.newSingleThreadExecutor()
-  private val barcodeScanner by lazy {
+  private val barcodeScannerLazy = lazy {
     val options = BarcodeScannerOptions.Builder()
       .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
       .build()
     BarcodeScanning.getClient(options)
   }
+  private val barcodeScanner by barcodeScannerLazy
 
   private var cameraProvider: ProcessCameraProvider? = null
   private var camera: Camera? = null
@@ -81,22 +82,28 @@ class ExamIQCameraView(context: Context) : FrameLayout(context) {
   private var cameraActive: Boolean = true
   private var isBound: Boolean = false
   private var isBinding: Boolean = false
+  private var isDestroyed: Boolean = false
   private var lastQrEmitMs: Long = 0L
   private var lastQrValue: String = ""
   private var lastMarkerEmitMs: Long = 0L
 
   init {
     addView(previewView)
-    previewView.setOnTouchListener { _, event ->
-      if (event.action == MotionEvent.ACTION_UP) {
-        try {
-          val point = previewView.meteringPointFactory.createPoint(event.x, event.y)
-          val action = FocusMeteringAction.Builder(point).build()
-          camera?.cameraControl?.startFocusAndMetering(action)
-        } catch (_: Exception) {
+    previewView.setOnTouchListener { view, event ->
+      when (event.action) {
+        MotionEvent.ACTION_DOWN -> true
+        MotionEvent.ACTION_UP -> {
+          view.performClick()
+          try {
+            val point = previewView.meteringPointFactory.createPoint(event.x, event.y)
+            val action = FocusMeteringAction.Builder(point).build()
+            camera?.cameraControl?.startFocusAndMetering(action)
+          } catch (_: Exception) {
+          }
+          true
         }
+        else -> false
       }
-      false
     }
   }
 
@@ -138,11 +145,33 @@ class ExamIQCameraView(context: Context) : FrameLayout(context) {
 
   fun setCameraActive(active: Boolean) {
     cameraActive = active
-    if (active) {
+    if (active && !isDestroyed) {
       activeInstance = this
       startCameraIfPermitted()
     } else {
       stopCamera()
+      if (activeInstance === this) {
+        activeInstance = null
+      }
+    }
+  }
+
+  fun destroy() {
+    if (isDestroyed) return
+    isDestroyed = true
+    stopCamera()
+    if (activeInstance === this) {
+      activeInstance = null
+    }
+    try {
+      analysisExecutor.shutdownNow()
+    } catch (_: Exception) {
+    }
+    if (barcodeScannerLazy.isInitialized()) {
+      try {
+        barcodeScanner.close()
+      } catch (_: Exception) {
+      }
     }
   }
 
@@ -489,7 +518,7 @@ class ExamIQCameraView(context: Context) : FrameLayout(context) {
 
     capture.takePicture(
       outputOptions,
-      ContextCompat.getMainExecutor(context),
+      analysisExecutor,
       object : ImageCapture.OnImageSavedCallback {
         override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
           normalizeExifRotation(outFile)
@@ -504,6 +533,8 @@ class ExamIQCameraView(context: Context) : FrameLayout(context) {
   }
 
   private fun normalizeExifRotation(file: File) {
+    var bmp: Bitmap? = null
+    var rotated: Bitmap? = null
     try {
       val exif = ExifInterface(file.absolutePath)
       val orientation = exif.getAttributeInt(
@@ -517,15 +548,22 @@ class ExamIQCameraView(context: Context) : FrameLayout(context) {
         else -> 0f
       }
       if (deg == 0f) return
-      val bmp = BitmapFactory.decodeFile(file.absolutePath) ?: return
+      bmp = BitmapFactory.decodeFile(file.absolutePath) ?: return
       val matrix = Matrix().apply { postRotate(deg) }
-      val rotated = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true)
-      FileOutputStream(file).use { out ->
+      rotated = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true)
+      val temp = File(file.parentFile, "${file.name}.tmp")
+      FileOutputStream(temp).use { out ->
         rotated.compress(Bitmap.CompressFormat.JPEG, 92, out)
       }
-      bmp.recycle()
-      rotated.recycle()
+      if (temp.exists() && temp.length() > 0) {
+        temp.renameTo(file)
+      } else {
+        temp.delete()
+      }
     } catch (_: Exception) {
+    } finally {
+      rotated?.recycle()
+      bmp?.recycle()
     }
   }
 }

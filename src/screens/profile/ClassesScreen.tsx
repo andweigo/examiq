@@ -12,7 +12,7 @@ import {
   ScreenLayout,
 } from '@components/index';
 import {ClassSectionView} from '@data/database/SeedData';
-import {useProfileSettings, useRoster, useToast} from '@hooks/index';
+import {useExams, useProfileSettings, useRoster, useToast} from '@hooks/index';
 import {RootRoute, RootStackParamList} from '@navigation/routes';
 import {Colors} from '@theme/colors';
 
@@ -20,20 +20,21 @@ export const ClassesScreen: React.FC = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {classes, service: rosterService} = useRoster();
+  const {service: examService} = useExams();
   const {teacher} = useProfileSettings();
   const {showToast} = useToast();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ClassSectionView | null>(null);
-  const [grade, setGrade] = useState('Grade 10');
+  const [grade, setGrade] = useState('');
   const [section, setSection] = useState('');
-  const [advisor, setAdvisor] = useState(teacher.name);
+  const [advisor, setAdvisor] = useState('');
 
   const openAdd = () => {
     setEditing(null);
-    setGrade('Grade 10');
+    setGrade('');
     setSection('');
-    setAdvisor(teacher.name);
+    setAdvisor('');
     setModalOpen(true);
   };
 
@@ -46,16 +47,29 @@ export const ClassesScreen: React.FC = () => {
   };
 
   const handleSave = () => {
+    if (!grade.trim()) {
+      showToast('Enter a grade or year level');
+      return;
+    }
     if (!section.trim()) {
       showToast('Enter a section name');
       return;
     }
+    const resolvedAdvisor = advisor.trim() || teacher.name || 'Class Advisor';
     if (editing) {
-      rosterService.updateClassSection(editing.id, grade, section, advisor);
-      showToast(`Updated ${grade} · ${section}`);
+      const renamed = rosterService.updateClassSection(
+        editing.id,
+        grade,
+        section,
+        resolvedAdvisor,
+      );
+      if (renamed) {
+        examService.renameSection(renamed.previousLabel, renamed.nextLabel);
+      }
+      showToast(`Updated ${grade.trim()} · ${section.trim()}`);
     } else {
-      rosterService.addClassSection(grade, section, advisor);
-      showToast(`Added ${grade} · ${section}`);
+      rosterService.addClassSection(grade, section, resolvedAdvisor);
+      showToast(`Added ${grade.trim()} · ${section.trim()}`);
     }
     setModalOpen(false);
   };
@@ -137,17 +151,17 @@ export const ClassesScreen: React.FC = () => {
         }>
         <View style={styles.twoCol}>
           <MinimalField
-            label="Grade level"
+            label="Grade / Year level"
             value={grade}
             onChangeText={setGrade}
-            placeholder="Grade 10"
+            placeholder="e.g. Grade 10"
             containerStyle={styles.flex}
           />
           <MinimalField
             label="Section"
             value={section}
             onChangeText={setSection}
-            placeholder="Aguinaldo"
+            placeholder="e.g. Rizal"
             containerStyle={styles.flex}
           />
         </View>
@@ -156,7 +170,7 @@ export const ClassesScreen: React.FC = () => {
           label="Class advisor"
           value={advisor}
           onChangeText={setAdvisor}
-          placeholder="Advisor full name"
+          placeholder="e.g. Maria Santos"
         />
       </FormModal>
     </ScreenLayout>

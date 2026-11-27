@@ -89,7 +89,7 @@ export const SettingsScreen: React.FC = () => {
     return {
       isSample: false,
       summary: ScoreCalculator.summarizeClass(
-        students.map(s => ({earnedPoints: s.score, maxPoints: s.total})),
+        students.map(s => ScoreCalculator.combinedStudentScore(s)),
       ),
     };
   }, [students]);

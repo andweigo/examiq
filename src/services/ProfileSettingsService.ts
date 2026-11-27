@@ -408,11 +408,17 @@ export class ProfileSettingsService extends ObservableStore<ProfileSettingsState
     }
   }
 
-  public recordExport(fileName: string): void {
+  public recordExport(
+    fileName: string,
+    filePath?: string,
+    mimeType?: string,
+  ): void {
     const entry: ExportHistoryView = {
       id: IdGenerator.nextPrefixedId('exp'),
       fileName,
       date: DateFormatter.toShortTime(new Date().toISOString()),
+      filePath,
+      mimeType,
     };
     this.setState(prev => ({
       ...prev,

@@ -1,5 +1,5 @@
 import React, {useMemo, useState} from 'react';
-import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {Alert, Pressable, StyleSheet, Text, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {
@@ -19,6 +19,7 @@ import {useExams, useRoster, useToast} from '@hooks/index';
 import {RootRoute, RootStackParamList} from '@navigation/routes';
 import {Colors} from '@theme/colors';
 import {Radii} from '@theme/spacing';
+import {DateFormatter} from '@utils/DateFormatter';
 
 const ITEM_PRESETS = ['10', '16', '30', '40', '50'] as const;
 
@@ -33,14 +34,12 @@ export const ExamsScreen: React.FC = () => {
   const [editingExam, setEditingExam] = useState<ExamCardItem | null>(null);
   const [term, setTerm] = useState('');
   const [selectedSubjectName, setSelectedSubjectName] = useState(
-    subjects[0]?.name ?? 'Mathematics',
+    subjects[0]?.name ?? '',
   );
-  const [selectedClassId, setSelectedClassId] = useState(
-    classes[0]?.id ?? 'cls-1',
-  );
+  const [selectedClassId, setSelectedClassId] = useState(classes[0]?.id ?? '');
   const [itemCount, setItemCount] = useState<string>('16');
   const [paperSize, setPaperSize] = useState<PaperSize>('A4');
-  const [dateLabel, setDateLabel] = useState('Nov 27');
+  const [dateLabel, setDateLabel] = useState('');
 
   // Clean text-only subject pills (no count badges)
   const subjectFilterOptions = useMemo(() => {
@@ -65,50 +64,121 @@ export const ExamsScreen: React.FC = () => {
       : exams.filter(e => e.subject === effectiveFilter);
 
   const openCreateModal = () => {
+    if (subjects.length === 0) {
+      Alert.alert(
+        'Register a subject first',
+        'You need at least one subject registered to your account before creating an exam.',
+        [
+          {text: 'Cancel', style: 'cancel'},
+          {
+            text: 'Add subject',
+            onPress: () => navigation.navigate(RootRoute.Subjects),
+          },
+        ],
+      );
+      return;
+    }
+    if (classes.length === 0) {
+      Alert.alert(
+        'Add a class section first',
+        'Add at least one class & section before creating an exam.',
+        [
+          {text: 'Cancel', style: 'cancel'},
+          {
+            text: 'Add class',
+            onPress: () => navigation.navigate(RootRoute.Classes),
+          },
+        ],
+      );
+      return;
+    }
+    const matchingFilterSubject = subjects.find(
+      s => s.name.toLowerCase() === effectiveFilter.toLowerCase(),
+    );
     setEditingExam(null);
     setTerm('');
-    setSelectedSubjectName(
-      effectiveFilter !== 'All'
-        ? effectiveFilter
-        : subjects[0]?.name ?? 'Mathematics',
-    );
-    setSelectedClassId(classes[0]?.id ?? 'cls-1');
+    setSelectedSubjectName(matchingFilterSubject?.name ?? subjects[0].name);
+    setSelectedClassId(classes[0].id);
     setItemCount('16');
     setPaperSize('A4');
-    setDateLabel('Nov 27');
+    setDateLabel('');
     setModalOpen(true);
   };
 
   const openEditModal = (exam: ExamCardItem) => {
     setEditingExam(exam);
     setTerm(exam.term);
-    setSelectedSubjectName(exam.subject);
+    const matchedSub = subjects.find(
+      s => s.name.toLowerCase() === exam.subject.toLowerCase(),
+    );
+    setSelectedSubjectName(matchedSub?.name ?? exam.subject);
     const matchedClass = classes.find(
       c => `${c.grade} ${c.section}`.toLowerCase() === exam.section.toLowerCase(),
     );
-    setSelectedClassId(matchedClass?.id ?? classes[0]?.id ?? 'cls-1');
+    setSelectedClassId(matchedClass?.id ?? classes[0]?.id ?? '');
     setItemCount(String(exam.items));
     setPaperSize(exam.paperSize ?? 'A4');
     setDateLabel(exam.date);
     setModalOpen(true);
   };
 
+  const requestCloseModal = () => {
+    const isDirty = editingExam
+      ? term.trim() !== editingExam.term ||
+        selectedSubjectName !== editingExam.subject ||
+        dateLabel.trim() !== editingExam.date ||
+        Number(itemCount) !== editingExam.items ||
+        paperSize !== editingExam.paperSize
+      : Boolean(term.trim() || dateLabel.trim());
+
+    if (!isDirty) {
+      setModalOpen(false);
+      return;
+    }
+    Alert.alert(
+      'Discard changes?',
+      'Are you sure you want to exit? Unsaved progress will not be saved.',
+      [
+        {text: 'Stay', style: 'cancel'},
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: () => setModalOpen(false),
+        },
+      ],
+    );
+  };
+
   const handleSaveExam = () => {
-    const matchedSubject = subjects.find(s => s.name === selectedSubjectName);
+    const matchedSubject = subjects.find(
+      s => s.name.toLowerCase() === selectedSubjectName.trim().toLowerCase(),
+    );
+    if (!matchedSubject) {
+      showToast('Select a registered subject first');
+      return;
+    }
     const matchedClass = classes.find(c => c.id === selectedClassId);
+    if (!matchedClass && !editingExam) {
+      showToast('Select a class section first');
+      return;
+    }
     const sectionLabel = matchedClass
       ? `${matchedClass.grade} ${matchedClass.section}`
-      : 'Grade 10 Rizal';
+      : editingExam?.section ?? '';
 
+    const todayShort = DateFormatter.toShortDate(new Date().toISOString());
     const payload = {
-      subject: selectedSubjectName,
+      subject: matchedSubject.name,
       term: term.trim() || 'Quiz',
       section: sectionLabel,
-      date: dateLabel.trim() || 'Nov 27',
-      color: matchedSubject?.color ?? editingExam?.color ?? Colors.purple,
+      date: dateLabel.trim() || todayShort,
+      color: matchedSubject.color ?? editingExam?.color ?? Colors.purple,
       items: Number(itemCount) || 16,
       paperSize,
-      totalStudents: matchedClass?.students ?? editingExam?.total ?? 40,
+      totalStudents: Math.max(
+        1,
+        matchedClass?.students ?? editingExam?.total ?? 40,
+      ),
     };
 
     if (editingExam) {
@@ -226,7 +296,7 @@ export const ExamsScreen: React.FC = () => {
         visible={modalOpen}
         title={editingExam ? 'Edit exam' : 'New exam'}
         subtitle="Saved offline in local SQLite"
-        onClose={() => setModalOpen(false)}
+        onClose={requestCloseModal}
         footer={
           <View style={styles.footerStack}>
             {editingExam ? (
@@ -248,7 +318,7 @@ export const ExamsScreen: React.FC = () => {
                   label="Cancel"
                   variant="muted"
                   style={styles.flex}
-                  onPress={() => setModalOpen(false)}
+                  onPress={requestCloseModal}
                 />
               )}
               <PillButton
@@ -288,14 +358,14 @@ export const ExamsScreen: React.FC = () => {
             label="Exam title"
             value={term}
             onChangeText={setTerm}
-            placeholder="Quarterly, Quiz 4"
+            placeholder="e.g. Quarterly, Quiz 4"
             containerStyle={styles.flex}
           />
           <MinimalField
             label="Date"
             value={dateLabel}
             onChangeText={setDateLabel}
-            placeholder="Nov 27"
+            placeholder="e.g. Nov 27"
             containerStyle={styles.dateCol}
           />
         </View>

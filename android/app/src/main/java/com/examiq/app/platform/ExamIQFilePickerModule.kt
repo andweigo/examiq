@@ -78,6 +78,10 @@ class ExamIQFilePickerModule(private val reactContext: ReactApplicationContext) 
       promise.reject("NO_ACTIVITY", "Current Android activity is unavailable.")
       return
     }
+    if (pendingPromise != null) {
+      promise.reject("PICKER_BUSY", "A file picker request is already in progress.")
+      return
+    }
     pendingPromise = promise
     pendingMode = REQ_PICK_SPREADSHEET
 
@@ -95,7 +99,12 @@ class ExamIQFilePickerModule(private val reactContext: ReactApplicationContext) 
         )
       )
     }
-    activity.startActivityForResult(intent, REQ_PICK_SPREADSHEET)
+    try {
+      activity.startActivityForResult(intent, REQ_PICK_SPREADSHEET)
+    } catch (e: Exception) {
+      pendingPromise = null
+      promise.reject("PICKER_UNAVAILABLE", e.message ?: "No document picker available.", e)
+    }
   }
 
   @ReactMethod
@@ -105,6 +114,10 @@ class ExamIQFilePickerModule(private val reactContext: ReactApplicationContext) 
       promise.reject("NO_ACTIVITY", "Current Android activity is unavailable.")
       return
     }
+    if (pendingPromise != null) {
+      promise.reject("PICKER_BUSY", "A file picker request is already in progress.")
+      return
+    }
     pendingPromise = promise
     pendingMode = REQ_PICK_BACKUP
 
@@ -112,7 +125,12 @@ class ExamIQFilePickerModule(private val reactContext: ReactApplicationContext) 
       addCategory(Intent.CATEGORY_OPENABLE)
       type = "*/*"
     }
-    activity.startActivityForResult(intent, REQ_PICK_BACKUP)
+    try {
+      activity.startActivityForResult(intent, REQ_PICK_BACKUP)
+    } catch (e: Exception) {
+      pendingPromise = null
+      promise.reject("PICKER_UNAVAILABLE", e.message ?: "No document picker available.", e)
+    }
   }
 
   private fun queryDisplayName(uri: Uri): String {
@@ -125,13 +143,18 @@ class ExamIQFilePickerModule(private val reactContext: ReactApplicationContext) 
     return uri.lastPathSegment ?: "selected_file"
   }
 
-  private fun readAllBytes(uri: Uri): ByteArray {
+  private fun readAllBytes(uri: Uri, maxBytes: Int = 20 * 1024 * 1024): ByteArray {
     return reactContext.contentResolver.openInputStream(uri)?.use { input ->
       val out = ByteArrayOutputStream()
       val buf = ByteArray(8192)
+      var total = 0
       while (true) {
         val read = input.read(buf)
         if (read <= 0) break
+        total += read
+        if (total > maxBytes) {
+          throw IllegalArgumentException("Selected file exceeds the 20 MB offline import limit.")
+        }
         out.write(buf, 0, read)
       }
       out.toByteArray()
@@ -146,14 +169,17 @@ class ExamIQFilePickerModule(private val reactContext: ReactApplicationContext) 
       return
     }
 
+    val previewText = String(bytes, 0, minOf(bytes.size, 64), Charsets.UTF_8)
+      .removePrefix("\uFEFF")
+      .trimStart()
     val isJson = fileName.endsWith(".json", ignoreCase = true) ||
-      (bytes.firstOrNull()?.toInt()?.toChar() == '{')
+      previewText.startsWith("{")
 
     if (isJson) {
       val map = Arguments.createMap().apply {
         putString("fileName", fileName)
         putString("format", "json")
-        putString("payloadJson", String(bytes, Charsets.UTF_8))
+        putString("payloadJson", String(bytes, Charsets.UTF_8).removePrefix("\uFEFF"))
       }
       promise.resolve(map)
       return
@@ -406,10 +432,11 @@ class ExamIQFilePickerModule(private val reactContext: ReactApplicationContext) 
     var gradeCol = -1
     var sectionCol = -1
 
+    val idHeaderRegex = Regex("\\b(id|lrn|student_id|student id)\\b")
     if (hasHeader) {
       firstLower.forEachIndexed { idx, header ->
         when {
-          idCol == -1 && (header.contains("id") || header.contains("lrn")) -> idCol = idx
+          idCol == -1 && idHeaderRegex.containsMatchIn(header) -> idCol = idx
           firstNameCol == -1 && header.contains("first") -> firstNameCol = idx
           lastNameCol == -1 && header.contains("last") -> lastNameCol = idx
           nameCol == -1 && (header.contains("name") || header.contains("student")) -> nameCol = idx

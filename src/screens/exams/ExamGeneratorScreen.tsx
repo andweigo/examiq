@@ -1,11 +1,12 @@
-import React, {useMemo} from 'react';
-import {Pressable, StyleSheet, Text, View} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import React, {useCallback, useMemo} from 'react';
+import {Alert, BackHandler, Pressable, StyleSheet, Text, View} from 'react-native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {
   BackHeader,
   DisplayHeading,
   FilterPills,
+  OwlMascot,
   PillButton,
   QrMatrixSvg,
   ScreenLayout,
@@ -36,6 +37,31 @@ export const ExamGeneratorScreen: React.FC = () => {
 
   const paperSpec = PAPER_SIZE_MAP[selectedExam.paperSize ?? 'A4'];
 
+  const confirmExitGenerator = useCallback(() => {
+    Alert.alert(
+      'Exit exam generator?',
+      'Are you sure you want to leave? Any unsaved progress will not be saved.',
+      [
+        {text: 'Stay', style: 'cancel'},
+        {
+          text: 'Leave',
+          style: 'destructive',
+          onPress: () => navigation.navigate(RootRoute.Exams),
+        },
+      ],
+    );
+  }, [navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        confirmExitGenerator();
+        return true;
+      });
+      return () => sub.remove();
+    }, [confirmExitGenerator]),
+  );
+
   const studentOptions = useMemo(() => {
     const firstNamesCount = new Map<string, number>();
     sectionStudents.forEach(s => {
@@ -54,16 +80,35 @@ export const ExamGeneratorScreen: React.FC = () => {
     });
   }, [sectionStudents]);
 
-  const qrString = qrCodec.encode({
-    version: 2,
-    assignmentId: `${selectedExam.id}-${selectedGeneratorStudent.id}`,
-    examId: selectedExam.id,
-    studentId: selectedGeneratorStudent.id,
-    paperSize: selectedExam.paperSize,
-    itemCount: selectedExam.items,
-  });
+  const hasValidExam = Boolean(selectedExam.id);
+  const hasStudents = sectionStudents.length > 0 && Boolean(selectedGeneratorStudent.id);
+
+  const qrString = useMemo(() => {
+    if (!hasValidExam || !selectedGeneratorStudent.id) {
+      return '';
+    }
+    return qrCodec.encode({
+      version: 2,
+      assignmentId: `${selectedExam.id}-${selectedGeneratorStudent.id}`,
+      examId: selectedExam.id,
+      studentId: selectedGeneratorStudent.id,
+      paperSize: selectedExam.paperSize,
+      itemCount: selectedExam.items,
+    });
+  }, [
+    hasValidExam,
+    qrCodec,
+    selectedExam.id,
+    selectedExam.paperSize,
+    selectedExam.items,
+    selectedGeneratorStudent.id,
+  ]);
 
   const handleGenerateBatchPdfs = async () => {
+    if (!hasValidExam || sectionStudents.length === 0) {
+      showToast('Add students to this section first');
+      return;
+    }
     const now = new Date().toISOString();
     const assignments = sectionStudents.map(student => {
       const assignmentId = `${selectedExam.id}-${student.id}`;
@@ -104,7 +149,11 @@ export const ExamGeneratorScreen: React.FC = () => {
       );
 
       if (nativePdf) {
-        profileService.recordExport(nativePdf.fileName);
+        profileService.recordExport(
+          nativePdf.fileName,
+          nativePdf.filePath,
+          'application/pdf',
+        );
         profileService.pushAlert(
           `Saved ${nativePdf.pageCount}-page ${paperSpec.code} PDF (${nativePdf.fileName})`,
         );
@@ -131,10 +180,31 @@ export const ExamGeneratorScreen: React.FC = () => {
     showToast(`Generated ${assignments.length} sheets`);
   };
 
+  if (!hasValidExam) {
+    return (
+      <ScreenLayout activeTab="exams">
+        <BackHeader onBack={() => navigation.navigate(RootRoute.Exams)} />
+        <View style={styles.emptyWrap}>
+          <OwlMascot pose="empty" size={96} />
+          <Text style={styles.emptyTitle}>No exam selected</Text>
+          <Text style={styles.emptySub}>
+            Create an exam first to preview and generate printable QR OMR sheets.
+          </Text>
+          <PillButton
+            label="Go to Exams"
+            variant="dark"
+            compact
+            onPress={() => navigation.navigate(RootRoute.Exams)}
+          />
+        </View>
+      </ScreenLayout>
+    );
+  }
+
   return (
     <ScreenLayout activeTab="exams">
       <BackHeader
-        onBack={() => navigation.navigate(RootRoute.Exams)}
+        onBack={confirmExitGenerator}
         right={
           <Pressable
             onPress={() =>
@@ -152,6 +222,26 @@ export const ExamGeneratorScreen: React.FC = () => {
         boldText="generator"
         style={styles.heading}
       />
+
+      {!hasStudents ? (
+        <View style={styles.emptyWrap}>
+          <OwlMascot pose="empty" size={96} />
+          <Text style={styles.emptyTitle}>
+            No students in {selectedExam.section}
+          </Text>
+          <Text style={styles.emptySub}>
+            Enroll students in {selectedExam.section} before generating
+            individual QR-coded sheets.
+          </Text>
+          <PillButton
+            label="Add students"
+            variant="dark"
+            compact
+            onPress={() => navigation.navigate(RootRoute.Students)}
+          />
+        </View>
+      ) : (
+        <>
 
       {/* Fixed-Height Student Preview Pills */}
       <View style={styles.selectorBlock}>
@@ -235,11 +325,31 @@ export const ExamGeneratorScreen: React.FC = () => {
         variant="dark"
         onPress={handleGenerateBatchPdfs}
       />
+        </>
+      )}
     </ScreenLayout>
   );
 };
 
 const styles = StyleSheet.create({
+  emptyWrap: {
+    paddingVertical: 36,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.inkPrimary,
+    textAlign: 'center',
+  },
+  emptySub: {
+    fontSize: 12,
+    color: Colors.inkMuted,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
   editKeyLink: {
     fontSize: 12,
     fontWeight: '600',

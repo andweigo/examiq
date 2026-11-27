@@ -52,10 +52,9 @@ export class RosterService extends ObservableStore<RosterState> {
       return students;
     }
     const normalized = sectionLabel.trim().toLowerCase();
-    const matched = students.filter(
+    return students.filter(
       s => s.section.trim().toLowerCase() === normalized,
     );
-    return matched.length > 0 ? matched : students;
   }
 
   public getSelectedGeneratorStudent(sectionLabel?: string): StudentRecordView {
@@ -239,19 +238,25 @@ export class RosterService extends ObservableStore<RosterState> {
       this.getState().students.map(s => s.id.toLowerCase()),
     );
     let resolvedId = customStudentId?.trim() ?? '';
+    const currentYear = new Date().getFullYear();
     if (!resolvedId || existingIds.has(resolvedId.toLowerCase())) {
       let seq = this.getState().students.length + 1;
-      resolvedId = IdGenerator.nextStudentCode(2026, seq);
+      resolvedId = IdGenerator.nextStudentCode(currentYear, seq);
       while (existingIds.has(resolvedId.toLowerCase())) {
         seq += 1;
-        resolvedId = IdGenerator.nextStudentCode(2026, seq);
+        resolvedId = IdGenerator.nextStudentCode(currentYear, seq);
       }
     }
+
+    const firstClass = this.getState().classes[0];
+    const fallbackSection = firstClass
+      ? `${firstClass.grade} ${firstClass.section}`
+      : 'Unassigned';
 
     const student: StudentRecordView = {
       id: resolvedId,
       name: name.trim(),
-      section: section.trim() || 'Grade 10 Rizal',
+      section: section.trim() || fallbackSection,
       score: 0,
       total: 50,
       status: 'Pending',
@@ -298,7 +303,7 @@ export class RosterService extends ObservableStore<RosterState> {
   public importParsedStudents(
     rows: ReadonlyArray<{studentId: string; name: string; section: string}>,
     defaultSection: string,
-    defaultAdvisor = 'Elena Reyes',
+    defaultAdvisor = 'Class Advisor',
   ): {addedCount: number; skippedDuplicates: number; createdSections: number} {
     let addedCount = 0;
     let skippedDuplicates = 0;
@@ -318,16 +323,27 @@ export class RosterService extends ObservableStore<RosterState> {
 
     const newStudents: StudentRecordView[] = [];
     const newClasses: ClassSectionView[] = [];
+    const currentYear = new Date().getFullYear();
     let seq = this.getState().students.length + 1;
+    const firstClass = this.getState().classes[0];
+    const fallbackSection = firstClass
+      ? `${firstClass.grade} ${firstClass.section}`
+      : 'Unassigned';
 
     for (const row of rows) {
       const cleanName = row.name.trim();
       if (!cleanName) {
         continue;
       }
-      const cleanSection = row.section.trim() || defaultSection || 'Grade 10 Rizal';
-      const candidateId =
-        row.studentId.trim() || IdGenerator.nextStudentCode(2026, seq);
+      const cleanSection = row.section.trim() || defaultSection || fallbackSection;
+      let candidateId = row.studentId.trim();
+      if (!candidateId) {
+        candidateId = IdGenerator.nextStudentCode(currentYear, seq);
+        while (existingIds.has(candidateId.toLowerCase())) {
+          seq += 1;
+          candidateId = IdGenerator.nextStudentCode(currentYear, seq);
+        }
+      }
 
       if (
         existingIds.has(candidateId.toLowerCase()) ||
@@ -429,7 +445,7 @@ export class RosterService extends ObservableStore<RosterState> {
       grade: grade.trim() || 'Grade 10',
       section: section.trim() || 'New Section',
       students: 0,
-      advisor: advisor.trim() || 'Elena Reyes',
+      advisor: advisor.trim() || 'Class Advisor',
     };
     this.setState(prev => ({...prev, classes: [...prev.classes, entry]}));
     return entry;
@@ -440,20 +456,41 @@ export class RosterService extends ObservableStore<RosterState> {
     grade: string,
     section: string,
     advisor: string,
-  ): void {
+  ): {previousLabel: string; nextLabel: string} | null {
+    const existing = this.getState().classes.find(c => c.id === classId);
+    if (!existing) {
+      return null;
+    }
+    const nextGrade = grade.trim() || existing.grade;
+    const nextSection = section.trim() || existing.section;
+    const nextAdvisor = advisor.trim() || existing.advisor;
+    const previousLabel = `${existing.grade} ${existing.section}`.trim();
+    const nextLabel = `${nextGrade} ${nextSection}`.trim();
+    const sectionRenamed =
+      previousLabel.toLowerCase() !== nextLabel.toLowerCase();
+
     this.setState(prev => ({
       ...prev,
       classes: prev.classes.map(c =>
         c.id === classId
           ? {
               ...c,
-              grade: grade.trim() || c.grade,
-              section: section.trim() || c.section,
-              advisor: advisor.trim() || c.advisor,
+              grade: nextGrade,
+              section: nextSection,
+              advisor: nextAdvisor,
             }
           : c,
       ),
+      students: sectionRenamed
+        ? prev.students.map(s =>
+            s.section.trim().toLowerCase() === previousLabel.toLowerCase()
+              ? {...s, section: nextLabel}
+              : s,
+          )
+        : prev.students,
     }));
+
+    return {previousLabel, nextLabel};
   }
 
   public deleteClassSection(classId: string): void {
@@ -517,7 +554,7 @@ export class RosterService extends ObservableStore<RosterState> {
   }
 
   public getTotalStudentRecordsCount(): number {
-    return this.getState().classes.reduce((sum, c) => sum + c.students, 0);
+    return this.getState().students.length;
   }
 
   public restoreState(snapshot: RosterState): void {

@@ -190,7 +190,13 @@ class ExamIQSqliteModule(private val reactContext: ReactApplicationContext) :
   }
 
   private fun decryptBytes(blob: ByteArray): ByteArray {
+    if (blob.size < 2) {
+      throw IllegalArgumentException("Encrypted backup file is empty or truncated.")
+    }
     val ivLength = blob[0].toInt() and 0xFF
+    if (ivLength <= 0 || blob.size <= 1 + ivLength) {
+      throw IllegalArgumentException("Encrypted backup header is malformed.")
+    }
     val iv = blob.copyOfRange(1, 1 + ivLength)
     val encrypted = blob.copyOfRange(1 + ivLength, blob.size)
     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
@@ -200,6 +206,67 @@ class ExamIQSqliteModule(private val reactContext: ReactApplicationContext) :
       GCMParameterSpec(128, iv)
     )
     return cipher.doFinal(encrypted)
+  }
+
+  private fun validateAndReadBackupBytes(restoredDbBytes: ByteArray): String {
+    val magic = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)
+    if (restoredDbBytes.size < magic.size || !restoredDbBytes.copyOfRange(0, magic.size).contentEquals(magic)) {
+      throw IllegalArgumentException("Selected file is not a valid SQLite 3 database.")
+    }
+    val stagingFile = File(reactContext.cacheDir, "restore_staging_${System.currentTimeMillis()}.db")
+    try {
+      FileOutputStream(stagingFile).use { it.write(restoredDbBytes) }
+      val stagingDb = SQLiteDatabase.openDatabase(
+        stagingFile.absolutePath,
+        null,
+        SQLiteDatabase.OPEN_READONLY
+      )
+      try {
+        stagingDb.rawQuery(
+          "SELECT payload_json FROM app_state_snapshot WHERE key = ? LIMIT 1",
+          arrayOf("main")
+        ).use { cursor ->
+          if (!cursor.moveToFirst()) {
+            throw IllegalArgumentException("Backup database contains no ExamIQ snapshot.")
+          }
+          val json = cursor.getString(0)
+          if (json.isNullOrBlank()) {
+            throw IllegalArgumentException("Backup snapshot payload is empty.")
+          }
+          return json
+        }
+      } finally {
+        stagingDb.close()
+      }
+    } finally {
+      stagingFile.delete()
+      clearSidecarJournalFiles(stagingFile)
+    }
+  }
+
+  private fun swapValidatedDatabase(restoredDbBytes: ByteArray) {
+    val dbFile = reactContext.getDatabasePath(DB_NAME)
+    val rollbackFile = File(reactContext.cacheDir, "db_rollback_${System.currentTimeMillis()}.db")
+    dbHelper.close()
+    val hadPrevious = dbFile.exists()
+    if (hadPrevious) {
+      dbFile.copyTo(rollbackFile, overwrite = true)
+    }
+    try {
+      clearSidecarJournalFiles(dbFile)
+      FileOutputStream(dbFile).use { it.write(restoredDbBytes) }
+      // Verify the swapped DB opens cleanly
+      dbHelper.readableDatabase.rawQuery("SELECT 1", null).use { it.moveToFirst() }
+    } catch (e: Exception) {
+      dbHelper.close()
+      if (hadPrevious && rollbackFile.exists()) {
+        clearSidecarJournalFiles(dbFile)
+        rollbackFile.copyTo(dbFile, overwrite = true)
+      }
+      throw e
+    } finally {
+      rollbackFile.delete()
+    }
   }
 
   @ReactMethod
@@ -255,7 +322,9 @@ class ExamIQSqliteModule(private val reactContext: ReactApplicationContext) :
       val db = dbHelper.writableDatabase
       db.beginTransaction()
       try {
-        val now = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
+        val now = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+          timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(Date())
         val snapshotValues = ContentValues().apply {
           put("key", "main")
           put("payload_json", payloadJson)
@@ -398,52 +467,56 @@ class ExamIQSqliteModule(private val reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun exportDatabaseBackup(encrypt: Boolean, promise: Promise) {
-    try {
-      // Flush WAL/journal cleanly
-      dbHelper.writableDatabase.rawQuery("PRAGMA wal_checkpoint(FULL)", null).close()
-      val dbFile = reactContext.getDatabasePath(DB_NAME)
-      val rawBytes = dbFile.readBytes()
-      val finalBytes = if (encrypt) encryptBytes(rawBytes) else rawBytes
-
-      val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-      val ext = if (encrypt) ".examiq.enc.db" else ".db"
-      val fileName = "examiq_backup_$stamp$ext"
-
-      // Save internal copy for 1-tap restore & FileProvider sharing
-      val backupDir = File(reactContext.filesDir, "backups").apply { mkdirs() }
-      val localFile = File(backupDir, fileName)
-      FileOutputStream(localFile).use { it.write(finalBytes) }
-
-      // Also save a visible copy to Downloads/ExamIQ via MediaStore on Android 10+
-      var savedToDownloads = false
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val values = ContentValues().apply {
-          put(MediaStore.Downloads.DISPLAY_NAME, fileName)
-          put(MediaStore.Downloads.MIME_TYPE, "application/octet-stream")
-          put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/ExamIQ")
+    synchronized(dbLock) {
+      try {
+        // Properly execute and consume WAL checkpoint cursor so all writes are flushed to .db
+        dbHelper.writableDatabase.rawQuery("PRAGMA wal_checkpoint(FULL)", null).use { cursor ->
+          cursor.moveToFirst()
         }
-        val uri = reactContext.contentResolver.insert(
-          MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-          values
-        )
-        if (uri != null) {
-          reactContext.contentResolver.openOutputStream(uri)?.use { out ->
-            out.write(finalBytes)
-            savedToDownloads = true
+        val dbFile = reactContext.getDatabasePath(DB_NAME)
+        val rawBytes = dbFile.readBytes()
+        val finalBytes = if (encrypt) encryptBytes(rawBytes) else rawBytes
+
+        val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        val ext = if (encrypt) ".examiq.enc.db" else ".db"
+        val fileName = "examiq_backup_$stamp$ext"
+
+        // Save internal copy for 1-tap restore & FileProvider sharing
+        val backupDir = File(reactContext.filesDir, "backups").apply { mkdirs() }
+        val localFile = File(backupDir, fileName)
+        FileOutputStream(localFile).use { it.write(finalBytes) }
+
+        // Also save a visible copy to Downloads/ExamIQ via MediaStore on Android 10+
+        var savedToDownloads = false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          val values = ContentValues().apply {
+            put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+            put(MediaStore.Downloads.MIME_TYPE, "application/octet-stream")
+            put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/ExamIQ")
+          }
+          val uri = reactContext.contentResolver.insert(
+            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+            values
+          )
+          if (uri != null) {
+            reactContext.contentResolver.openOutputStream(uri)?.use { out ->
+              out.write(finalBytes)
+              savedToDownloads = true
+            }
           }
         }
-      }
 
-      val result = Arguments.createMap().apply {
-        putString("filePath", localFile.absolutePath)
-        putString("fileName", fileName)
-        putDouble("sizeBytes", finalBytes.size.toDouble())
-        putBoolean("encrypted", encrypt)
-        putBoolean("savedToDownloads", savedToDownloads)
+        val result = Arguments.createMap().apply {
+          putString("filePath", localFile.absolutePath)
+          putString("fileName", fileName)
+          putDouble("sizeBytes", finalBytes.size.toDouble())
+          putBoolean("encrypted", encrypt)
+          putBoolean("savedToDownloads", savedToDownloads)
+        }
+        promise.resolve(result)
+      } catch (e: Exception) {
+        promise.reject("BACKUP_EXPORT_ERROR", e.message, e)
       }
-      promise.resolve(result)
-    } catch (e: Exception) {
-      promise.reject("BACKUP_EXPORT_ERROR", e.message, e)
     }
   }
 
@@ -467,23 +540,14 @@ class ExamIQSqliteModule(private val reactContext: ReactApplicationContext) :
           rawBytes
         }
 
-        dbHelper.close()
-        val dbFile = reactContext.getDatabasePath(DB_NAME)
-        clearSidecarJournalFiles(dbFile)
-        FileOutputStream(dbFile).use { it.write(restoredDbBytes) }
+        val json = validateAndReadBackupBytes(restoredDbBytes)
+        swapValidatedDatabase(restoredDbBytes)
 
-        val reopened = dbHelper.readableDatabase
-        reopened.rawQuery(
-          "SELECT payload_json FROM app_state_snapshot WHERE key = ? LIMIT 1",
-          arrayOf("main")
-        ).use { cursor ->
-          val json = if (cursor.moveToFirst()) cursor.getString(0) else null
-          val map = Arguments.createMap().apply {
-            putString("fileName", latest.name)
-            putString("payloadJson", json)
-          }
-          promise.resolve(map)
+        val map = Arguments.createMap().apply {
+          putString("fileName", latest.name)
+          putString("payloadJson", json)
         }
+        promise.resolve(map)
       } catch (e: Exception) {
         promise.reject("BACKUP_RESTORE_ERROR", e.message, e)
       }
@@ -506,23 +570,14 @@ class ExamIQSqliteModule(private val reactContext: ReactApplicationContext) :
           rawBytes
         }
 
-        dbHelper.close()
-        val dbFile = reactContext.getDatabasePath(DB_NAME)
-        clearSidecarJournalFiles(dbFile)
-        FileOutputStream(dbFile).use { it.write(restoredDbBytes) }
+        val json = validateAndReadBackupBytes(restoredDbBytes)
+        swapValidatedDatabase(restoredDbBytes)
 
-        val reopened = dbHelper.readableDatabase
-        reopened.rawQuery(
-          "SELECT payload_json FROM app_state_snapshot WHERE key = ? LIMIT 1",
-          arrayOf("main")
-        ).use { cursor ->
-          val json = if (cursor.moveToFirst()) cursor.getString(0) else null
-          val map = Arguments.createMap().apply {
-            putString("fileName", sourceFile.name)
-            putString("payloadJson", json)
-          }
-          promise.resolve(map)
+        val map = Arguments.createMap().apply {
+          putString("fileName", sourceFile.name)
+          putString("payloadJson", json)
         }
+        promise.resolve(map)
       } catch (e: Exception) {
         promise.reject("BACKUP_RESTORE_ERROR", e.message, e)
       }
@@ -537,6 +592,12 @@ class ExamIQSqliteModule(private val reactContext: ReactApplicationContext) :
         reactContext.deleteDatabase(DB_NAME)
         File(reactContext.filesDir, "scans").deleteRecursively()
         File(reactContext.filesDir, "exports").deleteRecursively()
+        File(reactContext.filesDir, "backups").deleteRecursively()
+        reactContext.cacheDir.listFiles()?.forEach { f ->
+          if (f.isFile && (f.name.endsWith(".db") || f.name.endsWith(".json"))) {
+            f.delete()
+          }
+        }
         // Re-create empty clean schema
         val db = dbHelper.writableDatabase
         val version = querySqliteVersion(db)

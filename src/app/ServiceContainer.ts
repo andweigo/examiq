@@ -67,10 +67,23 @@ export class ServiceContainer {
   public readonly toastService: ToastService;
 
   private persistenceWired = false;
-  private hydrating = false;
+  private hydratingDepth = 0;
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
   private flushInFlight: Promise<void> = Promise.resolve();
   private accountVault: Record<string, StoredTeacherWorkspace> = {};
+
+  private get isHydrating(): boolean {
+    return this.hydratingDepth > 0;
+  }
+
+  private runHydrating<T>(fn: () => T): T {
+    this.hydratingDepth += 1;
+    try {
+      return fn();
+    } finally {
+      this.hydratingDepth = Math.max(0, this.hydratingDepth - 1);
+    }
+  }
 
   private constructor() {
     this.qrCodec = new QrPayloadCodec();
@@ -116,7 +129,11 @@ export class ServiceContainer {
       exams: this.examService.getState(),
       roster: this.rosterService.getState(),
       scanning: this.scanningService.getState(),
-      profile: profileState,
+      // Never nest recursive backup JSON blobs inside persisted vault entries
+      profile: {
+        ...profileState,
+        lastBackupSnapshotJson: null,
+      },
     };
   }
 
@@ -150,8 +167,9 @@ export class ServiceContainer {
       return;
     }
 
+    let hydratedCleanly = false;
+    this.hydratingDepth += 1;
     try {
-      this.hydrating = true;
       const dbInfo = await this.persistenceEngine.initAndInspect();
       const savedJson = await this.persistenceEngine.loadSnapshot();
 
@@ -173,17 +191,27 @@ export class ServiceContainer {
         );
       }
       this.profileSettingsService.evaluateWeeklyBackupReminder();
+      hydratedCleanly = true;
     } catch {
-      // Safe fallback to in-memory seed state if native storage fails
+      // Do not auto-overwrite an unreadable SQLite DB with empty/seed defaults
+      this.profileSettingsService.pushAlert({
+        title: 'Offline storage read warning',
+        detail:
+          'Could not read the previous SQLite snapshot. Restore a backup from Backup & Restore.',
+        category: 'backup',
+        targetRoute: 'BackupRestore',
+      });
     } finally {
-      this.hydrating = false;
-      this.attachAutoPersistence();
+      this.hydratingDepth = Math.max(0, this.hydratingDepth - 1);
+      if (hydratedCleanly) {
+        this.attachAutoPersistence();
+      }
     }
   }
 
   private attachAutoPersistence(): void {
     const scheduleSave = () => {
-      if (this.hydrating || !this.persistenceEngine.isNativeAvailable()) {
+      if (this.isHydrating || !this.persistenceEngine.isNativeAvailable()) {
         return;
       }
       if (this.saveTimer) {
@@ -191,7 +219,7 @@ export class ServiceContainer {
       }
       this.saveTimer = setTimeout(() => {
         this.saveTimer = null;
-        void this.flushNow();
+        this.flushNow().catch(() => {});
       }, 150);
     };
 
@@ -220,9 +248,9 @@ export class ServiceContainer {
           this.serializeCurrentState(),
         );
         if (sizeBytes) {
-          this.hydrating = true;
-          this.profileSettingsService.updateDatabaseSize(sizeBytes);
-          this.hydrating = false;
+          this.runHydrating(() => {
+            this.profileSettingsService.updateDatabaseSize(sizeBytes);
+          });
         }
       } catch {
         // Ignore transient disk write errors
@@ -246,16 +274,13 @@ export class ServiceContainer {
     this.snapshotActiveWorkspaceIntoVault();
     const newAccountId = IdGenerator.nextPrefixedId('acc');
 
-    this.hydrating = true;
-    try {
+    this.runHydrating(() => {
       this.examService.resetToEmptyWorkspace();
       this.rosterService.resetToEmptyWorkspace();
       this.scanningService.resetToEmptyWorkspace();
       this.profileSettingsService.startFreshAccountProfile(newAccountId, input);
       this.snapshotActiveWorkspaceIntoVault();
-    } finally {
-      this.hydrating = false;
-    }
+    });
 
     await this.flushNow();
     return newAccountId;
@@ -269,8 +294,7 @@ export class ServiceContainer {
     const demoId = 'acc-demo';
     const existingDemo = this.accountVault[demoId];
 
-    this.hydrating = true;
-    try {
+    this.runHydrating(() => {
       if (existingDemo) {
         this.examService.restoreState(existingDemo.exams);
         this.rosterService.restoreState(existingDemo.roster);
@@ -289,9 +313,7 @@ export class ServiceContainer {
         this.profileSettingsService.skipRegistration(demoId);
       }
       this.snapshotActiveWorkspaceIntoVault();
-    } finally {
-      this.hydrating = false;
-    }
+    });
 
     await this.flushNow();
   }
@@ -304,15 +326,12 @@ export class ServiceContainer {
     this.snapshotActiveWorkspaceIntoVault();
     const hasVaultAccounts = Object.keys(this.accountVault).length > 0;
 
-    this.hydrating = true;
-    try {
+    this.runHydrating(() => {
       this.examService.resetToEmptyWorkspace();
       this.rosterService.resetToEmptyWorkspace();
       this.scanningService.resetToEmptyWorkspace();
       this.profileSettingsService.logoutSession(hasVaultAccounts);
-    } finally {
-      this.hydrating = false;
-    }
+    });
 
     await this.flushNow();
   }
@@ -366,8 +385,7 @@ export class ServiceContainer {
       }
     }
 
-    this.hydrating = true;
-    try {
+    this.runHydrating(() => {
       this.examService.restoreState(workspace.exams);
       this.rosterService.restoreState(workspace.roster);
       this.scanningService.restoreState(workspace.scanning);
@@ -379,9 +397,7 @@ export class ServiceContainer {
       });
       this.profileSettingsService.evaluateWeeklyBackupReminder();
       this.snapshotActiveWorkspaceIntoVault();
-    } finally {
-      this.hydrating = false;
-    }
+    });
 
     await this.flushNow();
     return true;
@@ -390,15 +406,29 @@ export class ServiceContainer {
   public serializeCurrentState(): string {
     this.snapshotActiveWorkspaceIntoVault();
     const activeProfile = this.profileSettingsService.getState();
+    const sanitizedAccounts: Record<string, StoredTeacherWorkspace> = {};
+    for (const [accId, ws] of Object.entries(this.accountVault)) {
+      sanitizedAccounts[accId] = {
+        ...ws,
+        profile: {
+          ...ws.profile,
+          lastBackupSnapshotJson: null,
+        },
+      };
+    }
     const payload: ExamIQBackupSnapshot = {
       version: 2,
       exportedAt: new Date().toISOString(),
       activeAccountId: activeProfile.activeAccountId,
-      accounts: {...this.accountVault},
+      accounts: sanitizedAccounts,
       exams: this.examService.getState(),
       roster: this.rosterService.getState(),
       scanning: this.scanningService.getState(),
-      profile: activeProfile,
+      // Strip recursive snapshot string so repeated backups never grow exponentially
+      profile: {
+        ...activeProfile,
+        lastBackupSnapshotJson: null,
+      },
     };
     return JSON.stringify(payload);
   }
@@ -406,7 +436,14 @@ export class ServiceContainer {
   public createBackupSnapshot(): string {
     const json = this.serializeCurrentState();
     this.profileSettingsService.recordLocalBackup(json);
-    void this.flushNow();
+    this.flushNow().catch(() => {});
+    return json;
+  }
+
+  public async createAndFlushBackupSnapshot(): Promise<string> {
+    const json = this.serializeCurrentState();
+    this.profileSettingsService.recordLocalBackup(json);
+    await this.flushNow();
     return json;
   }
 
@@ -418,7 +455,7 @@ export class ServiceContainer {
         category: 'security',
         targetRoute: 'Profile',
       });
-      void this.flushNow();
+      this.flushNow().catch(() => {});
       return false;
     }
 
@@ -427,13 +464,16 @@ export class ServiceContainer {
       this.saveTimer = null;
     }
 
+    // Drain any in-flight SQLite save so it can never resurrect wiped data
+    await this.flushInFlight.catch(() => {});
+
     const activeId = this.profileSettingsService.getState().activeAccountId;
     if (activeId) {
       delete this.accountVault[activeId];
     }
     const remainingAccounts = Object.keys(this.accountVault).length > 0;
 
-    this.hydrating = true;
+    this.hydratingDepth += 1;
     try {
       if (!remainingAccounts) {
         const wiped = await this.persistenceEngine.wipeAllData();
@@ -455,7 +495,7 @@ export class ServiceContainer {
         this.profileSettingsService.logoutSession(true);
       }
     } finally {
-      this.hydrating = false;
+      this.hydratingDepth = Math.max(0, this.hydratingDepth - 1);
     }
 
     if (remainingAccounts) {
@@ -470,11 +510,32 @@ export class ServiceContainer {
       throw new Error('Invalid ExamIQ backup file format.');
     }
 
-    this.accountVault = parsed.accounts ? {...parsed.accounts} : {};
+    const cleanedVault: Record<string, StoredTeacherWorkspace> = {};
+    if (parsed.accounts) {
+      for (const [accId, ws] of Object.entries(parsed.accounts)) {
+        cleanedVault[accId] = {
+          ...ws,
+          profile: {
+            ...ws.profile,
+            lastBackupSnapshotJson: null,
+          },
+        };
+      }
+    }
+    this.accountVault = cleanedVault;
 
-    const resolvedRegistered = forceRegistered
-      ? true
-      : parsed.profile.isRegistered ?? true;
+    const hasVaultAccounts = Object.keys(this.accountVault).length > 0;
+    const snapshotWasLoggedOut =
+      parsed.profile.isRegistered === false && !parsed.activeAccountId;
+
+    // Never log into an empty "Signed out" shell when real accounts exist in the restored vault
+    const resolvedRegistered =
+      snapshotWasLoggedOut && hasVaultAccounts
+        ? false
+        : forceRegistered
+        ? true
+        : parsed.profile.isRegistered ?? true;
+
     const resolvedAccountId =
       parsed.activeAccountId ??
       parsed.profile.activeAccountId ??
@@ -494,6 +555,7 @@ export class ServiceContainer {
         scanning: parsed.scanning,
         profile: {
           ...parsed.profile,
+          lastBackupSnapshotJson: null,
           activeAccountId: resolvedAccountId,
           isRegistered: true,
           hasSavedProfile: true,
@@ -503,26 +565,29 @@ export class ServiceContainer {
 
     const hasAnyVaultAccount = Object.keys(this.accountVault).length > 0;
 
-    if (resolvedRegistered) {
-      this.examService.restoreState(parsed.exams);
-      this.rosterService.restoreState(parsed.roster);
-      this.scanningService.restoreState(parsed.scanning);
-      this.profileSettingsService.restoreState({
-        ...parsed.profile,
-        activeAccountId: resolvedAccountId,
-        isRegistered: true,
-        hasSavedProfile: true,
-      });
-    } else {
-      // Logged-out state: keep live stores completely cleared so previous teacher's data is isolated
-      this.examService.resetToEmptyWorkspace();
-      this.rosterService.resetToEmptyWorkspace();
-      this.scanningService.resetToEmptyWorkspace();
-      this.profileSettingsService.logoutSession(hasAnyVaultAccount);
-    }
+    this.runHydrating(() => {
+      if (resolvedRegistered) {
+        this.examService.restoreState(parsed.exams!);
+        this.rosterService.restoreState(parsed.roster!);
+        this.scanningService.restoreState(parsed.scanning!);
+        this.profileSettingsService.restoreState({
+          ...parsed.profile!,
+          lastBackupSnapshotJson: null,
+          activeAccountId: resolvedAccountId,
+          isRegistered: true,
+          hasSavedProfile: true,
+        });
+      } else {
+        // Logged-out state: keep live stores completely cleared so previous teacher's data is isolated
+        this.examService.resetToEmptyWorkspace();
+        this.rosterService.resetToEmptyWorkspace();
+        this.scanningService.resetToEmptyWorkspace();
+        this.profileSettingsService.logoutSession(hasAnyVaultAccount);
+      }
+    });
 
     if (forceRegistered) {
-      void this.flushNow();
+      this.flushNow().catch(() => {});
     }
   }
 }

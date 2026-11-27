@@ -53,7 +53,7 @@ export const ScanHistoryScreen: React.FC = () => {
             <Pressable
               key={item.id}
               onPress={() => {
-                scanningService.setActiveStudent(item.studentId);
+                scanningService.setActiveSession(item.studentId, item.examId);
                 navigation.navigate(RootRoute.Review, {scanId: item.id});
               }}
               style={({pressed}) => [styles.row, pressed && styles.rowPressed]}>

@@ -99,6 +99,7 @@ export interface ReviewTileView {
 export interface ScanHistoryItemView {
   id: string;
   studentId: string;
+  examId?: string;
   name: string;
   meta: string;
   status: string;
@@ -129,6 +130,8 @@ export interface ExportHistoryView {
   id: string;
   fileName: string;
   date: string;
+  filePath?: string;
+  mimeType?: string;
 }
 
 export interface BackupStatusView {

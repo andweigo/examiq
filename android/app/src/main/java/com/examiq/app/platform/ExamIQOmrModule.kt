@@ -21,6 +21,8 @@ import org.json.JSONArray
 import java.io.File
 import java.io.FileOutputStream
 import java.util.ArrayDeque
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.atan2
@@ -44,14 +46,36 @@ class ExamIQOmrModule(private val reactContext: ReactApplicationContext) :
     private const val TAG = "ExamIQOmr"
   }
 
-  private val qrScanner by lazy {
+  private val omrExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+  private val qrScannerLazy = lazy {
     val options = BarcodeScannerOptions.Builder()
       .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
       .build()
     BarcodeScanning.getClient(options)
   }
+  private val qrScanner by qrScannerLazy
 
   override fun getName(): String = "ExamIQOmr"
+
+  override fun invalidate() {
+    try {
+      omrExecutor.shutdownNow()
+    } catch (_: Exception) {
+    }
+    if (qrScannerLazy.isInitialized()) {
+      try {
+        qrScanner.close()
+      } catch (_: Exception) {
+      }
+    }
+    super.invalidate()
+  }
+
+  private fun pruneOldScans(scansDir: File, keepCount: Int = 12) {
+    val files = scansDir.listFiles()?.filter { it.isFile }?.sortedByDescending { it.lastModified() } ?: return
+    if (files.size <= keepCount) return
+    files.drop(keepCount).forEach { it.delete() }
+  }
 
   @ReactMethod
   fun capturePaperPhoto(promise: Promise) {
@@ -83,6 +107,31 @@ class ExamIQOmrModule(private val reactContext: ReactApplicationContext) :
     answerKeyJson: String,
     promise: Promise
   ) {
+    omrExecutor.execute {
+      alignAndAnalyzeSheetInternal(
+        rawImageUri,
+        paperSizeCode,
+        itemCount,
+        sensitivity,
+        flagDoubleShade,
+        answerKeyJson,
+        promise
+      )
+    }
+  }
+
+  private fun alignAndAnalyzeSheetInternal(
+    rawImageUri: String,
+    paperSizeCode: String,
+    itemCount: Int,
+    sensitivity: String,
+    flagDoubleShade: Boolean,
+    answerKeyJson: String,
+    promise: Promise
+  ) {
+    var rawBitmap: Bitmap? = null
+    var alignedBitmap: Bitmap? = null
+    var annotatedBitmap: Bitmap? = null
     try {
       val spec = PaperSpec.fromCode(paperSizeCode)
       val path = rawImageUri.removePrefix("file://")
@@ -93,7 +142,7 @@ class ExamIQOmrModule(private val reactContext: ReactApplicationContext) :
       }
 
       val opts = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888 }
-      val rawBitmap = BitmapFactory.decodeFile(rawFile.absolutePath, opts)
+      rawBitmap = BitmapFactory.decodeFile(rawFile.absolutePath, opts)
         ?: run {
           promise.reject("DECODE_ERROR", "Unable to decode captured sheet image.")
           return
@@ -143,16 +192,20 @@ class ExamIQOmrModule(private val reactContext: ReactApplicationContext) :
       )
 
       val warpMatrix = Matrix()
-      warpMatrix.setPolyToPoly(srcPts, 0, dstPts, 0, 4)
+      val warpOk = warpMatrix.setPolyToPoly(srcPts, 0, dstPts, 0, 4)
 
-      val alignedBitmap = Bitmap.createBitmap(
+      alignedBitmap = Bitmap.createBitmap(
         spec.warpWidthPx,
         spec.warpHeightPx,
         Bitmap.Config.ARGB_8888
       )
       val canvas = Canvas(alignedBitmap)
       canvas.drawColor(Color.WHITE)
-      canvas.drawBitmap(rawBitmap, warpMatrix, Paint(Paint.FILTER_BITMAP_FLAG))
+      if (warpOk) {
+        canvas.drawBitmap(rawBitmap, warpMatrix, Paint(Paint.FILTER_BITMAP_FLAG))
+      } else {
+        canvas.drawBitmap(rawBitmap, 0f, 0f, Paint(Paint.FILTER_BITMAP_FLAG))
+      }
 
       // Step 2: Lighting & Sharpness Diagnostics (gates tighten with OMR sensitivity)
       val dimLumaCutoff: Double
@@ -220,8 +273,9 @@ class ExamIQOmrModule(private val reactContext: ReactApplicationContext) :
         strokeWidth = 4.5f
       }
 
-      val annotatedBitmap = alignedBitmap.copy(Bitmap.Config.ARGB_8888, true)
-      val overlayCanvas = Canvas(annotatedBitmap)
+      val annotated = alignedBitmap.copy(Bitmap.Config.ARGB_8888, true)
+      annotatedBitmap = annotated
+      val overlayCanvas = Canvas(annotated)
 
       val choices = arrayOf("A", "B", "C", "D")
       val itemsArray = Arguments.createArray()
@@ -406,19 +460,13 @@ class ExamIQOmrModule(private val reactContext: ReactApplicationContext) :
         itemsArray.pushMap(itemMap)
       }
 
-      val scansDir = File(reactContext.filesDir, "scans").apply { mkdirs() }
-      val alignedFile = File(scansDir, "aligned_scan_${System.currentTimeMillis()}.jpg")
-      FileOutputStream(alignedFile).use { out ->
-        annotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
-      }
-
-      rawBitmap.recycle()
-      alignedBitmap.recycle()
-      annotatedBitmap.recycle()
-
       val spanW = abs(pTR.first - pTL.first)
       val spanH = abs(pBL.second - pTL.second)
       val (errorCode, errorMessage) = when {
+        !warpOk -> Pair(
+          "POOR_ALIGNMENT",
+          "Corner marks could not form a valid perspective warp. Hold the phone flat above the sheet."
+        )
         qrCheck.isUpsideDown -> Pair(
           "UPSIDE_DOWN",
           "Printed sheet appears upside down. Rotate the paper 180° so the QR code is at the top-right."
@@ -468,7 +516,17 @@ class ExamIQOmrModule(private val reactContext: ReactApplicationContext) :
         putString("lightingStatus", lightingStatus)
         putDouble("sharpnessScore", sharpnessScore)
         putString("rawImageUri", "file://${rawFile.absolutePath}")
-        putString("alignedImageUri", "file://${alignedFile.absolutePath}")
+        var alignedUriOut = "file://${rawFile.absolutePath}"
+        val scansDir = File(reactContext.filesDir, "scans").apply { mkdirs() }
+        if (errorCode == "OK" && annotatedBitmap != null) {
+          val alignedFile = File(scansDir, "aligned_scan_${System.currentTimeMillis()}.jpg")
+          FileOutputStream(alignedFile).use { out ->
+            annotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+          }
+          alignedUriOut = "file://${alignedFile.absolutePath}"
+        }
+        pruneOldScans(scansDir, 12)
+        putString("alignedImageUri", alignedUriOut)
         putInt("score", earnedCorrect)
         putInt("total", clampedItems)
         putInt("flaggedCount", flaggedCount)
@@ -479,6 +537,10 @@ class ExamIQOmrModule(private val reactContext: ReactApplicationContext) :
       promise.resolve(result)
     } catch (e: Exception) {
       promise.reject("OMR_ANALYZE_ERROR", e.message, e)
+    } finally {
+      annotatedBitmap?.recycle()
+      alignedBitmap?.recycle()
+      rawBitmap?.recycle()
     }
   }
 
@@ -505,8 +567,9 @@ class ExamIQOmrModule(private val reactContext: ReactApplicationContext) :
     val cropBottom = ((OmrGeometry.HEADER_TOP_PT + OmrGeometry.QR_CARD_SIZE_PT + 28f) * scaleY)
       .toInt().coerceIn(cropTop + 1, alignedBitmap.height)
 
+    var headerCrop: Bitmap? = null
     try {
-      val headerCrop = Bitmap.createBitmap(
+      headerCrop = Bitmap.createBitmap(
         alignedBitmap,
         cropLeft,
         cropTop,
@@ -518,12 +581,13 @@ class ExamIQOmrModule(private val reactContext: ReactApplicationContext) :
         1500L,
         TimeUnit.MILLISECONDS
       )
-      headerCrop.recycle()
       val hit = barcodes.firstOrNull { it.rawValue?.startsWith("EXAMIQ|") == true }
       if (hit?.rawValue != null) {
         return SheetQrCheck(hasExamIqQr = true, payload = hit.rawValue, isUpsideDown = false)
       }
     } catch (_: Exception) {
+    } finally {
+      headerCrop?.recycle()
     }
 
     // 2. Fallback: scan full raw image to detect ExamIQ QR even if sheet was cropped or upside down
@@ -794,12 +858,14 @@ class ExamIQOmrModule(private val reactContext: ReactApplicationContext) :
     darkCutoff: Double
   ): BubbleShadingMetrics {
     val r2 = innerRadius * innerRadius
-    val bleedInnerR = (outerRimRadius * 1.30f).toInt().coerceAtLeast(outerRimRadius + 3)
+    // Clamp bleedInnerR strictly below maxVerticalBleedPx so dense 50-item SHORT sheets still sample vertical bleed
+    val rawBleedInnerR = (outerRimRadius * 1.30f).toInt().coerceAtLeast(outerRimRadius + 3)
+    val bleedInnerR = minOf(rawBleedInnerR, (maxVerticalBleedPx - 2).coerceAtLeast(outerRimRadius + 1))
     val bleedInnerR2 = bleedInnerR * bleedInnerR
     val bleedOuterRx = (outerRimRadius * 1.88f).toInt().coerceAtLeast(bleedInnerR + 3)
-    val bleedOuterRy = minOf(
-      (outerRimRadius * 1.55f).toInt().coerceAtLeast(bleedInnerR + 2),
-      maxVerticalBleedPx
+    val bleedOuterRy = maxOf(
+      bleedInnerR + 1,
+      minOf((outerRimRadius * 1.55f).toInt().coerceAtLeast(bleedInnerR + 2), maxVerticalBleedPx)
     )
 
     val minX = (cx - bleedOuterRx).coerceAtLeast(0)

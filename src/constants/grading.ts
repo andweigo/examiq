@@ -6,4 +6,4 @@ export const POINT_WEIGHT_PRESETS: readonly PointWeight[] = [1, 2, 5];
 
 export const DEFAULT_OMR_ITEM_COUNT = 50;
 
-export const MAX_OMR_ITEM_COUNT = 100;
+export const MAX_OMR_ITEM_COUNT = 60;

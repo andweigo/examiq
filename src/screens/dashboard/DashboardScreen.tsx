@@ -64,10 +64,29 @@ export const DashboardScreen: React.FC = () => {
     [subjects, exams],
   );
 
-  const sortedSubjects = useMemo(
-    () => DashboardSorter.sortSubjects(subjects),
-    [subjects],
-  );
+  const sortedSubjects = useMemo(() => {
+    return DashboardSorter.sortSubjects(subjects).map(sub => {
+      const subExams = exams.filter(
+        e => e.subject.trim().toLowerCase() === sub.name.trim().toLowerCase(),
+      );
+      const examSections = new Set(
+        subExams.map(e => e.section.trim().toLowerCase()),
+      );
+      const matchedStudents =
+        examSections.size > 0
+          ? students.filter(st =>
+              examSections.has(st.section.trim().toLowerCase()),
+            )
+          : [];
+      if (matchedStudents.length > 0) {
+        const calc = ScoreCalculator.summarizeClass(
+          matchedStudents.map(st => ScoreCalculator.combinedStudentScore(st)),
+        );
+        return {...sub, passingRate: calc.passingRate};
+      }
+      return sub;
+    });
+  }, [subjects, exams, students]);
 
   const activeSectionFilter =
     sectionFilter !== 'ALL' &&

@@ -30,6 +30,10 @@ export const ReportsScreen: React.FC = () => {
   const {showToast} = useToast();
 
   const shareGradeSheet = async () => {
+    if (sectionStudents.length === 0) {
+      showToast('No students in this section');
+      return;
+    }
     const fileName = `${selectedExam.section}_${selectedExam.subject}_Grades.csv`.replace(
       /\s+/g,
       '_',
@@ -39,13 +43,13 @@ export const ReportsScreen: React.FC = () => {
       ...sectionStudents.map(s => {
         const mScore = s.manualScore ?? 0;
         const mMax = s.manualMax ?? 0;
-        const totalEarned = s.score + mScore;
-        const totalPossible = s.total + mMax;
-        return `${s.id},"${s.name}",${s.section},${s.score},${s.total},${mScore},${mMax},${totalEarned},${totalPossible},${ScoreCalculator.percentage(
-          totalEarned,
-          totalPossible,
+        const {earnedPoints, maxPoints} =
+          ScoreCalculator.combinedStudentScore(s);
+        return `${s.id},"${s.name}",${s.section},${s.score},${s.total},${mScore},${mMax},${earnedPoints},${maxPoints},${ScoreCalculator.percentage(
+          earnedPoints,
+          maxPoints,
         )}%,${
-          ScoreCalculator.isPassing(totalEarned, totalPossible)
+          ScoreCalculator.isPassing(earnedPoints, maxPoints)
             ? 'Passed'
             : 'Below 75%'
         }`;
@@ -55,7 +59,11 @@ export const ReportsScreen: React.FC = () => {
     try {
       const nativeFile = await pdfEngine.exportGradeSheetCsv(fileName, csvRows);
       if (nativeFile) {
-        service.recordExport(nativeFile.fileName);
+        service.recordExport(
+          nativeFile.fileName,
+          nativeFile.filePath,
+          'text/csv',
+        );
         showToast(nativeFile.savedToDownloads ? 'CSV saved' : 'CSV exported');
         await pdfEngine.shareFile(
           nativeFile.filePath,
@@ -73,9 +81,13 @@ export const ReportsScreen: React.FC = () => {
   };
 
   const sharePassingSummary = async () => {
+    if (sectionStudents.length === 0) {
+      showToast('No students in this section');
+      return;
+    }
     const fileName = `${selectedExam.section}_Summary.pdf`.replace(/\s+/g, '_');
     const summary = ScoreCalculator.summarizeClass(
-      sectionStudents.map(s => ({earnedPoints: s.score, maxPoints: s.total})),
+      sectionStudents.map(s => ScoreCalculator.combinedStudentScore(s)),
     );
 
     try {
@@ -92,7 +104,11 @@ export const ReportsScreen: React.FC = () => {
       });
 
       if (nativePdf) {
-        service.recordExport(nativePdf.fileName);
+        service.recordExport(
+          nativePdf.fileName,
+          nativePdf.filePath,
+          'application/pdf',
+        );
         showToast(nativePdf.savedToDownloads ? 'PDF saved' : 'PDF ready');
         await pdfEngine.shareFile(
           nativePdf.filePath,
@@ -157,7 +173,22 @@ export const ReportsScreen: React.FC = () => {
           exportHistory.map(item => (
             <Pressable
               key={item.id}
-              onPress={() => showToast('Ready to share')}
+              onPress={async () => {
+                if (item.filePath) {
+                  try {
+                    await pdfEngine.shareFile(
+                      item.filePath,
+                      item.mimeType ?? 'application/octet-stream',
+                      item.fileName,
+                    );
+                    return;
+                  } catch {
+                    showToast('File moved or unavailable');
+                    return;
+                  }
+                }
+                showToast('Re-export to share');
+              }}
               style={styles.row}>
               <Text style={styles.fileName}>{item.fileName}</Text>
               <Text style={styles.fileDate}>{item.date}</Text>

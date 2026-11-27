@@ -119,19 +119,22 @@ export const QrScannerScreen: React.FC = () => {
     }
   }, [isFocused]);
 
-  // Brief hint toast if no QR has been scanned after 8 seconds
+  // Show a clear toast if no QR is detected within 10 seconds
   useEffect(() => {
     if (!isFocused || scannedMatch !== null) {
       return;
     }
     const timer = setTimeout(() => {
-      showToast('Point camera at exam QR');
-    }, 8000);
+      showToast('No QR detected');
+    }, 10000);
     return () => clearTimeout(timer);
   }, [isFocused, scannedMatch, showToast]);
 
   const handleQrDetected = useCallback(
     (rawValue: string) => {
+      if (scannedMatch !== null) {
+        return;
+      }
       const trimmed = rawValue.trim();
       if (!trimmed.startsWith('EXAMIQ|')) {
         setScannedMatch(null);
@@ -206,6 +209,7 @@ export const QrScannerScreen: React.FC = () => {
       showToast(`Verified: ${matchedStudent.name}`);
     },
     [
+      scannedMatch,
       qrCodec,
       exams,
       students,
@@ -286,7 +290,7 @@ export const QrScannerScreen: React.FC = () => {
           <LiveCameraPreview
             mode="qr"
             torchEnabled={flashOn}
-            active={isFocused}
+            active={isFocused && scannedMatch === null}
             onQrDetected={handleQrDetected}
             style={styles.cameraFill}
           />

@@ -26,5 +26,9 @@ class ExamIQCameraViewManager : SimpleViewManager<ExamIQCameraView>() {
   fun setActive(view: ExamIQCameraView, active: Boolean) {
     view.setCameraActive(active)
   }
-}
 
+  override fun onDropViewInstance(view: ExamIQCameraView) {
+    view.destroy()
+    super.onDropViewInstance(view)
+  }
+}

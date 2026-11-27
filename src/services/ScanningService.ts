@@ -15,8 +15,21 @@ import {RosterService} from '@services/RosterService';
 import {Colors} from '@theme/colors';
 import {DateFormatter} from '@utils/DateFormatter';
 import {IdGenerator} from '@utils/IdGenerator';
+import {ScoreCalculator} from '@utils/ScoreCalculator';
 
 export type AlignmentViewMode = 'raw' | 'aligned';
+
+export interface StudentScanSession {
+  readonly rawImageUri: string | null;
+  readonly alignedImageUri: string | null;
+  readonly markersDetected: number;
+  readonly rotationAngleDeg: number;
+  readonly lightingStatus: string;
+  readonly sharpnessScore: number;
+  readonly reviewTiles: ReviewTileView[];
+  readonly confirmed: boolean;
+  readonly flaggedAlerted?: boolean;
+}
 
 export interface ScanningState {
   readonly flashOn: boolean;
@@ -31,11 +44,28 @@ export interface ScanningState {
   readonly sharpnessScore: number;
   readonly reviewTiles: ReviewTileView[];
   readonly scanHistory: ScanHistoryItemView[];
+  readonly scansByKey?: Record<string, StudentScanSession>;
 }
 
+const makeSessionKey = (examId: string, studentId: string): string =>
+  `${examId || 'default'}:${studentId || 'unknown'}`;
+
+const buildSeedScansByKey = (): Record<string, StudentScanSession> => ({
+  [makeSessionKey('ex-math-q1', '2026-0001')]: {
+    rawImageUri: null,
+    alignedImageUri: null,
+    markersDetected: 4,
+    rotationAngleDeg: -4.2,
+    lightingStatus: 'Clear',
+    sharpnessScore: 0.92,
+    reviewTiles: INITIAL_REVIEW_TILES.map(t => ({...t})),
+    confirmed: false,
+  },
+});
+
 /**
- * OOP Application Service coordinating live QR decode -> Paper capture -> OpenCV/OMR Alignment
- * -> Offline Bubble Check -> Manual Verification -> Scan History & Alerts.
+ * OOP Application Service coordinating live QR decode -> Paper capture -> OMR Alignment
+ * -> Offline Bubble Check -> Manual Verification -> Per-Student Scan Sessions & Alerts.
  */
 export class ScanningService extends ObservableStore<ScanningState> {
   private readonly rosterService: RosterService;
@@ -60,10 +90,20 @@ export class ScanningService extends ObservableStore<ScanningState> {
       sharpnessScore: 0.92,
       reviewTiles: INITIAL_REVIEW_TILES.map(t => ({...t})),
       scanHistory: INITIAL_SCAN_HISTORY.map(h => ({...h})),
+      scansByKey: buildSeedScansByKey(),
     });
     this.rosterService = rosterService;
     this.examService = examService;
     this.profileSettingsService = profileSettingsService;
+  }
+
+  private resolveSessionFor(
+    prev: ScanningState,
+    examId: string,
+    studentId: string,
+  ): StudentScanSession | null {
+    const key = makeSessionKey(examId, studentId);
+    return prev.scansByKey?.[key] ?? null;
   }
 
   public toggleFlash(): boolean {
@@ -77,15 +117,40 @@ export class ScanningService extends ObservableStore<ScanningState> {
   }
 
   public setActiveSession(studentId: string, examId?: string): void {
-    this.setState(prev => ({
-      ...prev,
-      activeStudentId: studentId,
-      activeExamId: examId ?? prev.activeExamId,
-    }));
+    this.setState(prev => {
+      const nextExamId = examId ?? prev.activeExamId;
+      const stored = this.resolveSessionFor(prev, nextExamId, studentId);
+      if (stored) {
+        return {
+          ...prev,
+          activeStudentId: studentId,
+          activeExamId: nextExamId,
+          rawImageUri: stored.rawImageUri,
+          alignedImageUri: stored.alignedImageUri,
+          markersDetected: stored.markersDetected,
+          rotationAngleDeg: stored.rotationAngleDeg,
+          lightingStatus: stored.lightingStatus,
+          sharpnessScore: stored.sharpnessScore,
+          reviewTiles: stored.reviewTiles.map(t => ({...t})),
+        };
+      }
+      return {
+        ...prev,
+        activeStudentId: studentId,
+        activeExamId: nextExamId,
+        rawImageUri: null,
+        alignedImageUri: null,
+        markersDetected: 0,
+        rotationAngleDeg: 0,
+        lightingStatus: 'Clear',
+        sharpnessScore: 1,
+        reviewTiles: [],
+      };
+    });
   }
 
   public setActiveStudent(studentId: string): void {
-    this.setState(prev => ({...prev, activeStudentId: studentId}));
+    this.setActiveSession(studentId, this.getState().activeExamId);
   }
 
   public setCapturedRawImage(rawImageUri: string | null): void {
@@ -98,6 +163,25 @@ export class ScanningService extends ObservableStore<ScanningState> {
 
   public applyNativeOmrAnalysis(result: NativeOmrAnalysisResult): void {
     const state = this.getState();
+    const key = makeSessionKey(state.activeExamId, state.activeStudentId);
+    const prevSession = state.scansByKey?.[key];
+    const pointsPerItem = this.examService.getPointsPerItem(state.activeExamId);
+    const earnedPoints = result.score * pointsPerItem;
+    const totalPoints = result.total * pointsPerItem;
+    const hasFlagged = result.flaggedCount > 0;
+
+    const nextSession: StudentScanSession = {
+      rawImageUri: result.rawImageUri,
+      alignedImageUri: result.alignedImageUri,
+      markersDetected: result.markersDetected,
+      rotationAngleDeg: result.rotationAngleDeg,
+      lightingStatus: result.lightingStatus,
+      sharpnessScore: result.sharpnessScore,
+      reviewTiles: result.items,
+      confirmed: prevSession?.confirmed ?? false,
+      flaggedAlerted: hasFlagged,
+    };
+
     this.setState(prev => ({
       ...prev,
       rawImageUri: result.rawImageUri,
@@ -107,15 +191,23 @@ export class ScanningService extends ObservableStore<ScanningState> {
       lightingStatus: result.lightingStatus,
       sharpnessScore: result.sharpnessScore,
       reviewTiles: result.items,
+      scansByKey: {
+        ...(prev.scansByKey ?? {}),
+        [key]: nextSession,
+      },
     }));
+
     this.rosterService.setStudentScore(
       state.activeStudentId,
-      result.score,
-      result.total,
-      result.flaggedCount > 0 ? 'Review' : 'Checked',
+      earnedPoints,
+      totalPoints,
+      hasFlagged ? 'Review' : 'Checked',
     );
 
-    if (result.flaggedCount > 0) {
+    if (hasFlagged) {
+      if (!prevSession?.flaggedAlerted) {
+        this.examService.recordScanFlagged(state.activeExamId);
+      }
       const student = this.rosterService
         .getState()
         .students.find(s => s.id === state.activeStudentId);
@@ -156,12 +248,7 @@ export class ScanningService extends ObservableStore<ScanningState> {
       s => s.id === this.getState().activeStudentId,
     );
     const nextStudent = students[(currentIdx + 1) % students.length];
-    this.setState(prev => ({
-      ...prev,
-      activeStudentId: nextStudent.id,
-      rawImageUri: null,
-      alignedImageUri: null,
-    }));
+    this.setActiveSession(nextStudent.id, this.getState().activeExamId);
     return {studentId: nextStudent.id, studentName: nextStudent.name};
   }
 
@@ -170,13 +257,15 @@ export class ScanningService extends ObservableStore<ScanningState> {
     flagDoubleShade: boolean,
   ): void {
     const state = this.getState();
-    // If real native OMR already populated tiles for a real captured image, keep them!
+    const sessionKey = makeSessionKey(state.activeExamId, state.activeStudentId);
+    // Keep real native OMR tiles when already populated for this exact student/exam capture
     if (state.alignedImageUri && state.reviewTiles.length > 0) {
       return;
     }
 
     const key = this.examService.getAnswerKey(state.activeExamId);
     const totalItems = Math.max(1, key.length);
+    const pointsPerItem = this.examService.getPointsPerItem(state.activeExamId);
 
     const buildFallbackRatios = (
       shaded: BubbleChoice[],
@@ -193,6 +282,42 @@ export class ScanningService extends ObservableStore<ScanningState> {
         }
       });
       return out;
+    };
+
+    const persistTilesAndScore = (tiles: ReviewTileView[]) => {
+      const earnedItems = tiles.filter(t => t.type === 'correct').length;
+      const hasFlagged = tiles.some(
+        t => t.type === 'blank' || t.type === 'flagged',
+      );
+      const prevSession = state.scansByKey?.[sessionKey];
+      const nextSession: StudentScanSession = {
+        rawImageUri: state.rawImageUri,
+        alignedImageUri: state.alignedImageUri,
+        markersDetected: state.markersDetected || 4,
+        rotationAngleDeg: state.rotationAngleDeg,
+        lightingStatus: state.lightingStatus,
+        sharpnessScore: state.sharpnessScore,
+        reviewTiles: tiles,
+        confirmed: prevSession?.confirmed ?? false,
+        flaggedAlerted: hasFlagged,
+      };
+      this.setState(prev => ({
+        ...prev,
+        reviewTiles: tiles,
+        scansByKey: {
+          ...(prev.scansByKey ?? {}),
+          [sessionKey]: nextSession,
+        },
+      }));
+      this.rosterService.setStudentScore(
+        state.activeStudentId,
+        earnedItems * pointsPerItem,
+        totalItems * pointsPerItem,
+        hasFlagged ? 'Review' : 'Checked',
+      );
+      if (hasFlagged && !prevSession?.flaggedAlerted) {
+        this.examService.recordScanFlagged(state.activeExamId);
+      }
     };
 
     if (state.activeStudentId === '2026-0001' && totalItems === 50) {
@@ -226,16 +351,7 @@ export class ScanningService extends ObservableStore<ScanningState> {
           fillRatios: buildFallbackRatios([expected], i),
         };
       });
-      const earned = tiles.filter(t => t.type === 'correct').length;
-      this.setState(prev => ({...prev, reviewTiles: tiles}));
-      this.rosterService.setStudentScore(
-        state.activeStudentId,
-        earned,
-        totalItems,
-        tiles.some(t => t.type === 'blank' || t.type === 'flagged')
-          ? 'Review'
-          : 'Checked',
-      );
+      persistTilesAndScore(tiles);
       return;
     }
 
@@ -289,24 +405,17 @@ export class ScanningService extends ObservableStore<ScanningState> {
       };
     });
 
-    const earned = tiles.filter(t => t.type === 'correct').length;
-    this.setState(prev => ({...prev, reviewTiles: tiles}));
-    this.rosterService.setStudentScore(
-      state.activeStudentId,
-      earned,
-      totalItems,
-      tiles.some(t => t.type === 'blank' || t.type === 'flagged')
-        ? 'Review'
-        : 'Checked',
-    );
+    persistTilesAndScore(tiles);
   }
 
   public setReviewTileChoice(
     tileIndex: number,
     choice: BubbleChoice | 'blank',
   ): {tile: ReviewTileView; delta: number} {
-    const currentTile = this.getState().reviewTiles[tileIndex];
+    const state = this.getState();
+    const currentTile = state.reviewTiles[tileIndex];
     const wasCorrect = currentTile.type === 'correct';
+    const pointsPerItem = this.examService.getPointsPerItem(state.activeExamId);
 
     let nextTile: ReviewTileView;
     if (choice === 'blank') {
@@ -336,20 +445,37 @@ export class ScanningService extends ObservableStore<ScanningState> {
     }
 
     const isNowCorrect = nextTile.type === 'correct';
-    const delta = (isNowCorrect ? 1 : 0) - (wasCorrect ? 1 : 0);
+    const delta = ((isNowCorrect ? 1 : 0) - (wasCorrect ? 1 : 0)) * pointsPerItem;
+    const sessionKey = makeSessionKey(state.activeExamId, state.activeStudentId);
 
-    this.setState(prev => ({
-      ...prev,
-      reviewTiles: prev.reviewTiles.map((t, idx) =>
+    this.setState(prev => {
+      const nextTiles = prev.reviewTiles.map((t, idx) =>
         idx === tileIndex ? nextTile : t,
-      ),
-    }));
+      );
+      const prevSession = prev.scansByKey?.[sessionKey];
+      return {
+        ...prev,
+        reviewTiles: nextTiles,
+        scansByKey: {
+          ...(prev.scansByKey ?? {}),
+          [sessionKey]: {
+            rawImageUri: prevSession?.rawImageUri ?? prev.rawImageUri,
+            alignedImageUri: prevSession?.alignedImageUri ?? prev.alignedImageUri,
+            markersDetected: prevSession?.markersDetected ?? prev.markersDetected,
+            rotationAngleDeg:
+              prevSession?.rotationAngleDeg ?? prev.rotationAngleDeg,
+            lightingStatus: prevSession?.lightingStatus ?? prev.lightingStatus,
+            sharpnessScore: prevSession?.sharpnessScore ?? prev.sharpnessScore,
+            reviewTiles: nextTiles,
+            confirmed: prevSession?.confirmed ?? false,
+            flaggedAlerted: prevSession?.flaggedAlerted,
+          },
+        },
+      };
+    });
 
     if (delta !== 0) {
-      this.rosterService.updateStudentScore(
-        this.getState().activeStudentId,
-        delta,
-      );
+      this.rosterService.updateStudentScore(state.activeStudentId, delta);
     }
 
     return {tile: nextTile, delta};
@@ -369,6 +495,10 @@ export class ScanningService extends ObservableStore<ScanningState> {
 
   public confirmActiveScan(): void {
     const state = this.getState();
+    const sessionKey = makeSessionKey(state.activeExamId, state.activeStudentId);
+    const prevSession = state.scansByKey?.[sessionKey];
+    const alreadyConfirmed = Boolean(prevSession?.confirmed);
+
     const student = this.rosterService
       .getState()
       .students.find(s => s.id === state.activeStudentId);
@@ -377,20 +507,46 @@ export class ScanningService extends ObservableStore<ScanningState> {
       .exams.find(e => e.id === state.activeExamId);
 
     this.rosterService.updateStudentScore(state.activeStudentId, 0, 'Checked');
-    this.examService.recordScanConfirmed(state.activeExamId);
+    this.examService.recordScanConfirmed(state.activeExamId, alreadyConfirmed);
 
     const existingIndex = state.scanHistory.findIndex(
-      h => h.studentId === state.activeStudentId,
+      h =>
+        h.studentId === state.activeStudentId &&
+        (!h.examId || h.examId === state.activeExamId),
     );
     const timeLabel = DateFormatter.toShortTime(new Date().toISOString());
+    const nextMeta = `${exam?.subject ?? 'Exam'} · ${timeLabel}`;
 
     this.setState(prev => {
+      const updatedSession: StudentScanSession = {
+        rawImageUri: prevSession?.rawImageUri ?? prev.rawImageUri,
+        alignedImageUri: prevSession?.alignedImageUri ?? prev.alignedImageUri,
+        markersDetected: prevSession?.markersDetected ?? prev.markersDetected,
+        rotationAngleDeg: prevSession?.rotationAngleDeg ?? prev.rotationAngleDeg,
+        lightingStatus: prevSession?.lightingStatus ?? prev.lightingStatus,
+        sharpnessScore: prevSession?.sharpnessScore ?? prev.sharpnessScore,
+        reviewTiles: prev.reviewTiles,
+        confirmed: true,
+        flaggedAlerted: false,
+      };
+      const nextScansByKey = {
+        ...(prev.scansByKey ?? {}),
+        [sessionKey]: updatedSession,
+      };
+
       if (existingIndex >= 0) {
         return {
           ...prev,
-          scanHistory: prev.scanHistory.map(item =>
-            item.studentId === state.activeStudentId
-              ? {...item, status: 'Checked', color: Colors.lime}
+          scansByKey: nextScansByKey,
+          scanHistory: prev.scanHistory.map((item, idx) =>
+            idx === existingIndex
+              ? {
+                  ...item,
+                  examId: state.activeExamId,
+                  meta: nextMeta,
+                  status: 'Checked',
+                  color: Colors.lime,
+                }
               : item,
           ),
         };
@@ -398,37 +554,44 @@ export class ScanningService extends ObservableStore<ScanningState> {
       const newEntry: ScanHistoryItemView = {
         id: IdGenerator.nextPrefixedId('scan'),
         studentId: state.activeStudentId,
+        examId: state.activeExamId,
         name: student?.name ?? 'Student',
-        meta: `${exam?.subject ?? 'Exam'} · ${timeLabel}`,
+        meta: nextMeta,
         status: 'Checked',
         color: Colors.lime,
       };
       return {
         ...prev,
+        scansByKey: nextScansByKey,
         scanHistory: [newEntry, ...prev.scanHistory],
       };
     });
 
     if (
       student &&
-      this.profileSettingsService.getState().settings.lowScoreAlerts &&
-      student.total > 0 &&
-      student.score / student.total < 0.75
+      this.profileSettingsService.getState().settings.lowScoreAlerts
     ) {
-      this.profileSettingsService.pushAlert({
-        title: `${student.name} scored below 75% (${student.score}/${student.total})`,
-        detail: `${exam?.subject ?? 'Exam'} · Tap to view class analytics and results.`,
-        category: 'score',
-        targetRoute: 'Results',
-        targetExamId: state.activeExamId,
-        targetStudentId: state.activeStudentId,
-      });
+      const combined = ScoreCalculator.combinedStudentScore(student);
+      if (
+        combined.maxPoints > 0 &&
+        !ScoreCalculator.isPassing(combined.earnedPoints, combined.maxPoints)
+      ) {
+        this.profileSettingsService.pushAlert({
+          title: `${student.name} scored below 75% (${combined.earnedPoints}/${combined.maxPoints})`,
+          detail: `${exam?.subject ?? 'Exam'} · Tap to view class analytics and results.`,
+          category: 'score',
+          targetRoute: 'Results',
+          targetExamId: state.activeExamId,
+          targetStudentId: state.activeStudentId,
+        });
+      }
     }
 
     const updatedExam = this.examService
       .getState()
       .exams.find(e => e.id === state.activeExamId);
     if (
+      !alreadyConfirmed &&
       updatedExam &&
       updatedExam.total > 0 &&
       updatedExam.scanned >= updatedExam.total
@@ -445,8 +608,7 @@ export class ScanningService extends ObservableStore<ScanningState> {
 
   /**
    * Dynamically re-evaluates existing scanned review tiles against a newly chosen
-   * OMR shading sensitivity profile (Strict / Balanced / Lenient) and double-shade rule
-   * using each tile's captured per-bubble fillRatios and bleedRatios.
+   * OMR shading sensitivity profile (Strict / Balanced / Lenient) and double-shade rule.
    */
   public reapplyOmrSensitivity(
     sensitivity: OmrSensitivity,
@@ -458,6 +620,7 @@ export class ScanningService extends ObservableStore<ScanningState> {
     }
 
     const profile = OMR_SENSITIVITY_PROFILES[sensitivity];
+    const pointsPerItem = this.examService.getPointsPerItem(state.activeExamId);
     let changedCount = 0;
 
     const updatedTiles: ReviewTileView[] = state.reviewTiles.map(tile => {
@@ -565,7 +728,36 @@ export class ScanningService extends ObservableStore<ScanningState> {
     });
 
     if (changedCount > 0) {
-      this.setState(prev => ({...prev, reviewTiles: updatedTiles}));
+      const sessionKey = makeSessionKey(
+        state.activeExamId,
+        state.activeStudentId,
+      );
+      this.setState(prev => {
+        const prevSession = prev.scansByKey?.[sessionKey];
+        return {
+          ...prev,
+          reviewTiles: updatedTiles,
+          scansByKey: {
+            ...(prev.scansByKey ?? {}),
+            [sessionKey]: {
+              rawImageUri: prevSession?.rawImageUri ?? prev.rawImageUri,
+              alignedImageUri:
+                prevSession?.alignedImageUri ?? prev.alignedImageUri,
+              markersDetected:
+                prevSession?.markersDetected ?? prev.markersDetected,
+              rotationAngleDeg:
+                prevSession?.rotationAngleDeg ?? prev.rotationAngleDeg,
+              lightingStatus:
+                prevSession?.lightingStatus ?? prev.lightingStatus,
+              sharpnessScore:
+                prevSession?.sharpnessScore ?? prev.sharpnessScore,
+              reviewTiles: updatedTiles,
+              confirmed: prevSession?.confirmed ?? false,
+              flaggedAlerted: prevSession?.flaggedAlerted,
+            },
+          },
+        };
+      });
       if (state.activeStudentId) {
         const earned = updatedTiles.filter(t => t.type === 'correct').length;
         const hasFlagged = updatedTiles.some(
@@ -573,8 +765,8 @@ export class ScanningService extends ObservableStore<ScanningState> {
         );
         this.rosterService.setStudentScore(
           state.activeStudentId,
-          earned,
-          updatedTiles.length,
+          earned * pointsPerItem,
+          updatedTiles.length * pointsPerItem,
           hasFlagged ? 'Review' : 'Checked',
         );
       }
@@ -603,6 +795,7 @@ export class ScanningService extends ObservableStore<ScanningState> {
       sharpnessScore: 1,
       reviewTiles: [],
       scanHistory: [],
+      scansByKey: {},
     });
   }
 
@@ -620,10 +813,14 @@ export class ScanningService extends ObservableStore<ScanningState> {
       sharpnessScore: 0.92,
       reviewTiles: INITIAL_REVIEW_TILES.map(t => ({...t})),
       scanHistory: INITIAL_SCAN_HISTORY.map(h => ({...h})),
+      scansByKey: buildSeedScansByKey(),
     });
   }
 
   public restoreState(snapshot: ScanningState): void {
-    this.setState(snapshot);
+    this.setState({
+      ...snapshot,
+      scansByKey: snapshot.scansByKey ?? {},
+    });
   }
 }

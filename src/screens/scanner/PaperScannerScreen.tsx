@@ -46,8 +46,7 @@ export const PaperScannerScreen: React.FC = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isFocused = useIsFocused();
-  const {selectedExam, exams, answerKey, alignmentOverlay, service: examService} =
-    useExams();
+  const {selectedExam, exams, answerKey, service: examService} = useExams();
   const {students} = useRoster();
   const {settings, service: profileService} = useProfileSettings();
   const {flashOn, activeStudentId, service: scanningService} = useScanning();
@@ -189,6 +188,11 @@ export const PaperScannerScreen: React.FC = () => {
       examService.setExamPaperSize(target.examId, target.paperSize);
       scanningService.setActiveSession(target.studentId, target.examId);
 
+      const targetExam = exams.find(e => e.id === target.examId);
+      if (targetExam && target.itemCount > 0 && target.itemCount !== targetExam.items) {
+        examService.adjustAnswerKeyLength(target.itemCount - targetExam.items);
+      }
+
       const targetKey = examService.getAnswerKey(target.examId);
       const rechecked = await omrEngine.alignAndAnalyze({
         rawImageUri: target.rawImageUri,
@@ -198,10 +202,12 @@ export const PaperScannerScreen: React.FC = () => {
         flagDoubleShade: settings.flagDoubleShade,
         answerKey: targetKey,
       });
-      if (rechecked) {
-        showToast(`Switched to ${target.studentName}`);
-        proceedToAlignment(target.rawImageUri, rechecked, target.studentId);
+      if (!rechecked || rechecked.sheetValid === false) {
+        triggerErrorToast('Sheet unreadable — retake');
+        return;
       }
+      showToast(`Switched to ${target.studentName}`);
+      proceedToAlignment(target.rawImageUri, rechecked, target.studentId);
     } catch {
       triggerErrorToast('Re-check failed');
     } finally {
@@ -270,7 +276,10 @@ export const PaperScannerScreen: React.FC = () => {
                 matchedExam.id !== selectedExam.id ||
                 matchedStudent.id !== activeStudent.id ||
                 (decoded.paperSize &&
-                  decoded.paperSize !== selectedExam.paperSize);
+                  decoded.paperSize !== selectedExam.paperSize) ||
+                (typeof decoded.itemCount === 'number' &&
+                  decoded.itemCount > 0 &&
+                  decoded.itemCount !== selectedExam.items);
 
               if (wrongSession) {
                 setMismatchTarget({
@@ -321,6 +330,10 @@ export const PaperScannerScreen: React.FC = () => {
           }
 
           proceedToAlignment(capturedUri, analysis);
+          return;
+        }
+        if (omrEngine.isNativeAvailable()) {
+          triggerErrorToast('Analysis failed — retry');
           return;
         }
       } else if (omrEngine.isNativeAvailable()) {

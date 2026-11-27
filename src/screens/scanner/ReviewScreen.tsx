@@ -236,7 +236,7 @@ export const ReviewScreen: React.FC = () => {
     );
     setSelectedTileIdx(null);
     const deltaLabel =
-      delta > 0 ? ' (+1)' : delta < 0 ? ' (-1)' : '';
+      delta > 0 ? ` (+${delta})` : delta < 0 ? ` (${delta})` : '';
     showToast(
       `#${tile.num} set to ${choice === 'blank' ? 'Blank' : choice}${deltaLabel}`,
     );
@@ -675,7 +675,13 @@ export const ReviewScreen: React.FC = () => {
               <Text style={styles.zoomItemNum}>Item {tile.num}</Text>
               <View style={styles.zoomBubbles}>
                 {BUBBLE_CHOICES.map(letter => {
-                  const shaded = tile.detected.includes(letter);
+                  const detectedTokens =
+                    tile.type === 'blank'
+                      ? []
+                      : tile.detected
+                          .split(/\s*\+\s*/)
+                          .map(part => part.replace(/\s*\(.*?\)/g, '').trim());
+                  const shaded = detectedTokens.includes(letter);
                   const isKey = tile.key === letter;
                   return (
                     <View

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<paths>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <files-path name="examiq_exports" path="exports/" />
+    <files-path name="examiq_backups" path="backups/" />
     <cache-path name="examiq_cache" path="." />
-    <files-path name="examiq_files" path="." />
-    <external-files-path name="examiq_exports" path="." />
 </paths>

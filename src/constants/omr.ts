@@ -76,7 +76,7 @@ export const OMR_SENSITIVITY_PROFILES: Readonly<
     maxBleedRatio: 0.2,
     partialMinRatio: 0.16,
     conflictSecondBubbleRatio: 0.46,
-    minSharpnessScore: 0.72,
+    minSharpnessScore: 0.28,
     maxFlaggedShare: 0.35,
   },
   balanced: {
@@ -88,7 +88,7 @@ export const OMR_SENSITIVITY_PROFILES: Readonly<
     maxBleedRatio: 0.26,
     partialMinRatio: 0.18,
     conflictSecondBubbleRatio: 0.36,
-    minSharpnessScore: 0.6,
+    minSharpnessScore: 0.2,
     maxFlaggedShare: 0.5,
   },
   lenient: {
@@ -100,7 +100,7 @@ export const OMR_SENSITIVITY_PROFILES: Readonly<
     maxBleedRatio: 0.34,
     partialMinRatio: 0.15,
     conflictSecondBubbleRatio: 0.28,
-    minSharpnessScore: 0.48,
+    minSharpnessScore: 0.14,
     maxFlaggedShare: 0.65,
   },
 };

@@ -140,8 +140,13 @@ class ExamIQPdfModule(private val reactContext: ReactApplicationContext) :
     canvas.drawText(studentName, 64f, cardTop + 48f, boldText)
 
     regularText.textSize = 9.5f
+    val resolvedDate = if (Regex("\\b20\\d{2}\\b").containsMatchIn(examDate)) {
+      examDate
+    } else {
+      "$examDate, ${java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)}"
+    }
     canvas.drawText("Student ID: $studentId", 64f, cardTop + 68f, regularText)
-    canvas.drawText("$section  ·  $examDate, 2026", 64f, cardTop + 84f, regularText)
+    canvas.drawText("$section  ·  $resolvedDate", 64f, cardTop + 84f, regularText)
     canvas.drawText("$itemCount multiple-choice items  ·  ${spec.code}", 64f, cardTop + 98f, regularText)
 
     // Right-side clean white QR frame with QR matrix strictly centered horizontally & vertically inside
@@ -287,8 +292,13 @@ class ExamIQPdfModule(private val reactContext: ReactApplicationContext) :
     var canvas = page.canvas
     canvas.drawColor(Color.WHITE)
 
+    val resolvedQDate = if (Regex("\\b20\\d{2}\\b").containsMatchIn(examDate)) {
+      examDate
+    } else {
+      "$examDate, ${java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)}"
+    }
     canvas.drawText("$examSubject · $examTerm — Question Sheet", 48f, 56f, titlePaint)
-    canvas.drawText("$section   ·   $examDate, 2026   ·   ${spec.label}", 48f, 74f, subPaint)
+    canvas.drawText("$section   ·   $resolvedQDate   ·   ${spec.label}", 48f, 74f, subPaint)
     canvas.drawText("Name: ____________________________________    Score: ______ / ${questions.length()}", 48f, 94f, choicePaint)
     canvas.drawLine(48f, 104f, spec.widthPt - 48f, 104f, linePaint)
 
@@ -501,18 +511,23 @@ class ExamIQPdfModule(private val reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun generatePassingRatePdf(reportJson: String, promise: Promise) {
+    val doc = PdfDocument()
     try {
       val root = JSONObject(reportJson)
       val students = root.getJSONArray("students")
-      val doc = PdfDocument()
-      val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
-      val page = doc.startPage(pageInfo)
-      val canvas = page.canvas
+      var pageNum = 1
+      var page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, pageNum).create())
+      var canvas = page.canvas
       canvas.drawColor(Color.WHITE)
 
       val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#111111")
         textSize = 20f
+        typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+      }
+      val headerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#111111")
+        textSize = 12f
         typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
       }
       val subPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -537,6 +552,17 @@ class ExamIQPdfModule(private val reactContext: ReactApplicationContext) :
         strokeWidth = 1f
       }
 
+      fun drawTableHeader(c: Canvas, startY: Float): Float {
+        c.drawText("Student ID", 44f, startY, headerPaint)
+        c.drawText("Name", 136f, startY, headerPaint)
+        c.drawText("Section", 308f, startY, headerPaint)
+        c.drawText("Score", 442f, startY, headerPaint)
+        c.drawText("Status", 498f, startY, headerPaint)
+        val lineY = startY + 10f
+        c.drawLine(44f, lineY, 551f, lineY, linePaint)
+        return lineY + 20f
+      }
+
       canvas.drawText("ExamIQ · Passing Rate Summary", 44f, 64f, titlePaint)
       canvas.drawText(
         "${root.optString("examTitle")}  ·  ${root.optString("schoolName")}  ·  Teacher: ${root.optString("teacherName")}",
@@ -554,23 +580,23 @@ class ExamIQPdfModule(private val reactContext: ReactApplicationContext) :
       canvas.drawText("Class Mean Score", 322f, 128f, subPaint)
       canvas.drawText("${root.optDouble("meanScore")}", 322f, 156f, titlePaint)
 
-      var y = 212f
-      titlePaint.textSize = 12f
-      canvas.drawText("Student ID", 44f, y, titlePaint)
-      canvas.drawText("Name", 136f, y, titlePaint)
-      canvas.drawText("Section", 308f, y, titlePaint)
-      canvas.drawText("Score", 442f, y, titlePaint)
-      canvas.drawText("Status", 498f, y, titlePaint)
-      y += 10f
-      canvas.drawLine(44f, y, 551f, y, linePaint)
-      y += 20f
+      var y = drawTableHeader(canvas, 212f)
 
       for (i in 0 until students.length()) {
-        if (y > 790f) break
+        if (y > 790f) {
+          doc.finishPage(page)
+          pageNum += 1
+          page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, pageNum).create())
+          canvas = page.canvas
+          canvas.drawColor(Color.WHITE)
+          canvas.drawText("ExamIQ · Passing Rate Summary (Page $pageNum)", 44f, 52f, subPaint)
+          y = drawTableHeader(canvas, 82f)
+        }
         val s = students.getJSONObject(i)
-        val score = s.optInt("score")
-        val total = s.optInt("total", 50).coerceAtLeast(1)
-        val passed = (score.toDouble() / total.toDouble()) >= 0.75
+        val score = s.optInt("score") + s.optInt("manualScore", 0)
+        val total = (s.optInt("total", 50) + s.optInt("manualMax", 0)).coerceAtLeast(1)
+        val pct = Math.round((score.toDouble() / total.toDouble()) * 1000.0) / 10.0
+        val passed = pct >= 75.0
 
         canvas.drawText(s.optString("id"), 44f, y, rowText)
         canvas.drawText(s.optString("name"), 136f, y, rowText)
@@ -587,7 +613,6 @@ class ExamIQPdfModule(private val reactContext: ReactApplicationContext) :
         .replace(Regex("[^A-Za-z0-9._-]"), "_")
       val outFile = File(exportsDir(), safeName)
       FileOutputStream(outFile).use { doc.writeTo(it) }
-      doc.close()
 
       val inDownloads = mirrorToDownloads(outFile, "application/pdf")
       val result = Arguments.createMap().apply {
@@ -599,6 +624,8 @@ class ExamIQPdfModule(private val reactContext: ReactApplicationContext) :
       promise.resolve(result)
     } catch (e: Exception) {
       promise.reject("PDF_REPORT_ERROR", e.message, e)
+    } finally {
+      doc.close()
     }
   }
 

@@ -34,14 +34,14 @@ export const SubjectsScreen: React.FC = () => {
   const [editing, setEditing] = useState<SubjectView | null>(null);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
-  const [sectionsLabel, setSectionsLabel] = useState('1 section');
+  const [sectionsLabel, setSectionsLabel] = useState('');
   const [accentColor, setAccentColor] = useState<string>(Colors.cyan);
 
   const openAdd = () => {
     setEditing(null);
     setName('');
     setCode('');
-    setSectionsLabel('1 section');
+    setSectionsLabel('');
     setAccentColor(Colors.cyan);
     setModalOpen(true);
   };
@@ -165,7 +165,7 @@ export const SubjectsScreen: React.FC = () => {
           label="Subject name"
           value={name}
           onChangeText={setName}
-          placeholder="Filipino, Araling Panlipunan"
+          placeholder="e.g. Filipino, Mathematics"
         />
 
         <View style={styles.twoCol}>
@@ -173,7 +173,7 @@ export const SubjectsScreen: React.FC = () => {
             label="Subject code"
             value={code}
             onChangeText={setCode}
-            placeholder="FIL-10"
+            placeholder="e.g. FIL-10"
             autoCapitalize="characters"
             containerStyle={styles.flex}
           />
@@ -181,7 +181,7 @@ export const SubjectsScreen: React.FC = () => {
             label="Sections"
             value={sectionsLabel}
             onChangeText={setSectionsLabel}
-            placeholder="2 sections"
+            placeholder="e.g. 2 sections"
             containerStyle={styles.flex}
           />
         </View>

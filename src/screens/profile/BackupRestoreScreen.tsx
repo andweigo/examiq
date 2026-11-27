@@ -20,7 +20,7 @@ export const BackupRestoreScreen: React.FC = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const container = useServices();
-  const {backup, settings, lastBackupSnapshotJson} = useProfileSettings();
+  const {backup, lastBackupSnapshotJson} = useProfileSettings();
   const {showToast} = useToast();
 
   const [restoreOpen, setRestoreOpen] = useState(false);
@@ -28,10 +28,11 @@ export const BackupRestoreScreen: React.FC = () => {
   const [pickingBackup, setPickingBackup] = useState(false);
 
   const handleExportBackup = async () => {
-    const snapshot = container.createBackupSnapshot();
+    const snapshot = await container.createAndFlushBackupSnapshot();
     try {
+      // Export portable SQLite .db so teachers can restore on any Android device
       const nativeExport = await container.persistenceEngine.exportDbBackup(
-        settings.autoLocalBackup,
+        false,
       );
       if (nativeExport) {
         showToast(
@@ -46,7 +47,7 @@ export const BackupRestoreScreen: React.FC = () => {
       }
       showToast('Backup exported');
       await Share.share({
-        title: 'examiq_backup_2026.db',
+        title: `examiq_backup_${new Date().getFullYear()}.db`,
         message: snapshot,
       });
     } catch {

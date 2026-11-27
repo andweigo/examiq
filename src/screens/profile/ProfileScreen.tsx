@@ -194,19 +194,19 @@ export const ProfileScreen: React.FC = () => {
               <MinimalField
                 value={draftName}
                 onChangeText={setDraftName}
-                placeholder="Teacher name"
+                placeholder="e.g. Maria Santos"
                 style={styles.inlineNameInput}
               />
               <MinimalField
                 value={draftRole}
                 onChangeText={setDraftRole}
-                placeholder="Role / specialization"
+                placeholder="e.g. Mathematics Teacher"
                 style={styles.inlineSubInput}
               />
               <MinimalField
                 value={draftSchool}
                 onChangeText={setDraftSchool}
-                placeholder="School name"
+                placeholder="e.g. National High School"
                 style={styles.inlineSubInput}
               />
             </View>

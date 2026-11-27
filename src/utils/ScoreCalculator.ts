@@ -11,6 +11,18 @@ export interface ClassPerformanceSummary {
  * Pure domain calculation utility for exam scores and class analytics.
  */
 export class ScoreCalculator {
+  public static combinedStudentScore(student: {
+    score: number;
+    total: number;
+    manualScore?: number;
+    manualMax?: number;
+  }): {earnedPoints: number; maxPoints: number} {
+    return {
+      earnedPoints: student.score + (student.manualScore ?? 0),
+      maxPoints: student.total + (student.manualMax ?? 0),
+    };
+  }
+
   public static percentage(earnedPoints: number, maxPoints: number): number {
     if (maxPoints <= 0) {
       return 0;

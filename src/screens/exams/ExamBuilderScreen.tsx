@@ -1,6 +1,14 @@
-import React, {useState} from 'react';
-import {Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {
+  Alert,
+  BackHandler,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {
   BackHeader,
@@ -23,17 +31,15 @@ import {Radii} from '@theme/spacing';
 
 const ESSAY_POINT_PRESETS = [5, 10, 15, 20] as const;
 
-const SAMPLE_IMPORT_TEXT = [
-  'Solve for y: 3y - 6 = 15 | 5 | 7 | 8 | 9 | B',
-  'What is the value of 2^5? | 16 | 25 | 32 | 64 | C',
-  'Derivative of x^2 with respect to x | x | 2x | x^2 | 2 | B',
-].join('\n');
+const IMPORT_EXAMPLE_PLACEHOLDER =
+  'e.g. Solve for y: 3y - 6 = 15 | 5 | 7 | 8 | 9 | B';
 
 export const ExamBuilderScreen: React.FC = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {
     selectedExam,
+    answerKey,
     questions,
     mcqQuestions,
     essayQuestions,
@@ -44,6 +50,7 @@ export const ExamBuilderScreen: React.FC = () => {
 
   const [questionModalOpen, setQuestionModalOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [menuOpenIndex, setMenuOpenIndex] = useState<number | null>(null);
   const [questionKind, setQuestionKind] = useState<QuestionKind>('mcq');
   const [prompt, setPrompt] = useState('');
   const [choiceA, setChoiceA] = useState('');
@@ -51,13 +58,62 @@ export const ExamBuilderScreen: React.FC = () => {
   const [choiceC, setChoiceC] = useState('');
   const [choiceD, setChoiceD] = useState('');
   const [correctChoice, setCorrectChoice] = useState<BubbleChoice>('A');
-  const [essayPoints, setEssayPoints] = useState('10');
+  const [essayPoints, setEssayPoints] = useState('');
   const [essayRubric, setEssayRubric] = useState('');
 
   const [importModalOpen, setImportModalOpen] = useState(false);
-  const [importText, setImportText] = useState(SAMPLE_IMPORT_TEXT);
+  const [importText, setImportText] = useState('');
+
+  // Auto-populate editable items if an existing exam has an answer key but no question entries yet
+  useEffect(() => {
+    if (
+      selectedExam.id &&
+      answerKey.length > 0 &&
+      mcqQuestions.length < answerKey.length
+    ) {
+      service.ensureQuestionsFromAnswerKey(selectedExam.id);
+    }
+  }, [selectedExam.id, answerKey.length, mcqQuestions.length, service]);
+
+  const confirmExitBuilder = useCallback(() => {
+    Alert.alert(
+      'Exit exam editor?',
+      'Are you sure you want to leave? Unsaved progress will not be saved.',
+      [
+        {text: 'Stay', style: 'cancel'},
+        {
+          text: 'Leave',
+          style: 'destructive',
+          onPress: () => navigation.navigate(RootRoute.Exams),
+        },
+      ],
+    );
+  }, [navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (questionModalOpen) {
+          setQuestionModalOpen(false);
+          return true;
+        }
+        if (importModalOpen) {
+          setImportModalOpen(false);
+          return true;
+        }
+        if (menuOpenIndex !== null) {
+          setMenuOpenIndex(null);
+          return true;
+        }
+        confirmExitBuilder();
+        return true;
+      });
+      return () => sub.remove();
+    }, [questionModalOpen, importModalOpen, menuOpenIndex, confirmExitBuilder]),
+  );
 
   const openAddModal = () => {
+    setMenuOpenIndex(null);
     setEditingIndex(null);
     setQuestionKind('mcq');
     setPrompt('');
@@ -66,7 +122,7 @@ export const ExamBuilderScreen: React.FC = () => {
     setChoiceC('');
     setChoiceD('');
     setCorrectChoice('A');
-    setEssayPoints('10');
+    setEssayPoints('');
     setEssayRubric('');
     setQuestionModalOpen(true);
   };
@@ -76,6 +132,7 @@ export const ExamBuilderScreen: React.FC = () => {
     if (!q) {
       return;
     }
+    setMenuOpenIndex(null);
     setEditingIndex(idx);
     setQuestionKind(q.kind ?? 'mcq');
     setPrompt(q.text);
@@ -87,6 +144,25 @@ export const ExamBuilderScreen: React.FC = () => {
     setEssayPoints(String(q.maxPoints ?? 10));
     setEssayRubric(q.rubric ?? '');
     setQuestionModalOpen(true);
+  };
+
+  const confirmDeleteQuestionAt = (idx: number) => {
+    setMenuOpenIndex(null);
+    Alert.alert(
+      `Delete Question #${idx + 1}?`,
+      'This removes the question from the exam and updates the answer key.',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            service.deleteQuestion(idx);
+            showToast(`Deleted Q#${idx + 1}`);
+          },
+        },
+      ],
+    );
   };
 
   const handleSaveQuestion = () => {
@@ -170,7 +246,7 @@ export const ExamBuilderScreen: React.FC = () => {
     <ScreenLayout activeTab="exams" scrollable={false}>
       <View style={styles.stickyTop}>
         <BackHeader
-          onBack={() => navigation.navigate(RootRoute.Exams)}
+          onBack={confirmExitBuilder}
           right={
             <Pressable
               onPress={() =>
@@ -265,11 +341,6 @@ export const ExamBuilderScreen: React.FC = () => {
                       </Text>
                     </Pressable>
                     <View style={styles.headerBadges}>
-                      <Pressable
-                        onPress={() => openEditModal(qIdx)}
-                        style={styles.editBadge}>
-                        <Text style={styles.editBadgeText}>Edit</Text>
-                      </Pressable>
                       {isEssay ? (
                         <View style={styles.essayBadge}>
                           <Text style={styles.essayBadgeText}>
@@ -288,8 +359,38 @@ export const ExamBuilderScreen: React.FC = () => {
                           </Text>
                         </Pressable>
                       )}
+                      <Pressable
+                        onPress={() =>
+                          setMenuOpenIndex(prev => (prev === qIdx ? null : qIdx))
+                        }
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Options for question ${q.num}`}
+                        style={styles.moreBtn}>
+                        <Text style={styles.moreBtnGlyph}>⋮</Text>
+                      </Pressable>
                     </View>
                   </View>
+
+                  {menuOpenIndex === qIdx ? (
+                    <View style={styles.questionActionMenu}>
+                      <Pressable
+                        onPress={() => openEditModal(qIdx)}
+                        style={styles.questionMenuItem}>
+                        <Text style={styles.questionMenuText}>
+                          Edit question
+                        </Text>
+                      </Pressable>
+                      <View style={styles.questionMenuDivider} />
+                      <Pressable
+                        onPress={() => confirmDeleteQuestionAt(qIdx)}
+                        style={styles.questionMenuItem}>
+                        <Text style={styles.questionMenuDeleteText}>
+                          Delete question
+                        </Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
 
                   {isEssay ? (
                     <View style={styles.essayMetaBox}>
@@ -413,8 +514,8 @@ export const ExamBuilderScreen: React.FC = () => {
           onChangeText={setPrompt}
           placeholder={
             questionKind === 'essay'
-              ? 'Write the essay prompt or open-ended task...'
-              : 'Type the question here...'
+              ? 'e.g. Explain how photosynthesis converts light energy'
+              : 'e.g. Solve for x: 2x + 4 = 12'
           }
           multiline
         />
@@ -438,7 +539,7 @@ export const ExamBuilderScreen: React.FC = () => {
                 value={essayPoints}
                 onChangeText={setEssayPoints}
                 keyboardType="number-pad"
-                placeholder="10"
+                placeholder="e.g. 10"
               />
             </View>
 
@@ -461,7 +562,7 @@ export const ExamBuilderScreen: React.FC = () => {
                   prefix="A"
                   value={choiceA}
                   onChangeText={setChoiceA}
-                  placeholder="First option"
+                  placeholder="e.g. 2"
                   containerStyle={styles.flex}
                 />
                 <MinimalField
@@ -469,7 +570,7 @@ export const ExamBuilderScreen: React.FC = () => {
                   prefix="B"
                   value={choiceB}
                   onChangeText={setChoiceB}
-                  placeholder="Second option"
+                  placeholder="e.g. 4"
                   containerStyle={styles.flex}
                 />
               </View>
@@ -479,7 +580,7 @@ export const ExamBuilderScreen: React.FC = () => {
                   prefix="C"
                   value={choiceC}
                   onChangeText={setChoiceC}
-                  placeholder="Third option"
+                  placeholder="e.g. 6"
                   containerStyle={styles.flex}
                 />
                 <MinimalField
@@ -487,7 +588,7 @@ export const ExamBuilderScreen: React.FC = () => {
                   prefix="D"
                   value={choiceD}
                   onChangeText={setChoiceD}
-                  placeholder="Fourth option"
+                  placeholder="e.g. 8"
                   containerStyle={styles.flex}
                 />
               </View>
@@ -532,6 +633,7 @@ export const ExamBuilderScreen: React.FC = () => {
           variant="soft"
           value={importText}
           onChangeText={setImportText}
+          placeholder={IMPORT_EXAMPLE_PLACEHOLDER}
           multiline
           style={styles.importArea}
         />
@@ -638,16 +740,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-  editBadge: {
-    backgroundColor: Colors.surfaceMuted,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+  moreBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  editBadgeText: {
-    fontSize: 10,
-    fontWeight: '600',
+  moreBtnGlyph: {
+    fontSize: 16,
+    fontWeight: '700',
     color: Colors.inkSecondary,
+    lineHeight: 18,
+  },
+  questionActionMenu: {
+    marginTop: 8,
+    alignSelf: 'flex-end',
+    backgroundColor: Colors.surfaceWhite,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.hairlineLight,
+    minWidth: 152,
+    overflow: 'hidden',
+  },
+  questionMenuItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  questionMenuDivider: {
+    height: 1,
+    backgroundColor: Colors.hairlineLight,
+  },
+  questionMenuText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.inkPrimary,
+  },
+  questionMenuDeleteText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.coralDeep,
   },
   questionPrompt: {
     fontSize: 12,

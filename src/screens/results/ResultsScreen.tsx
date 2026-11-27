@@ -146,7 +146,6 @@ export const ResultsScreen: React.FC = () => {
       }
       if (
         sectionsMatchingSubject !== null &&
-        sectionsMatchingSubject.size > 0 &&
         !sectionsMatchingSubject.has(s.section.trim().toLowerCase())
       ) {
         return false;

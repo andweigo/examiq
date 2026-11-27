@@ -25,10 +25,8 @@ import {RootRoute, RootStackParamList} from '@navigation/routes';
 import {Colors} from '@theme/colors';
 import {Radii} from '@theme/spacing';
 
-const SAMPLE_CSV = [
-  'Carlo Bautista, Grade 10 Rizal',
-  'Mikaela Cruz, Grade 10 Bonifacio',
-].join('\n');
+const CSV_EXAMPLE_PLACEHOLDER =
+  'e.g. Carlo Bautista, Grade 10 Rizal\nMikaela Cruz, Grade 10 Bonifacio';
 
 export const StudentsScreen: React.FC = () => {
   const navigation =
@@ -43,8 +41,8 @@ export const StudentsScreen: React.FC = () => {
   const [addMode, setAddMode] = useState<'single' | 'excel'>('single');
   const [newName, setNewName] = useState('');
   const [newStudentId, setNewStudentId] = useState('');
-  const [newSection, setNewSection] = useState('Grade 10 Rizal');
-  const [csvDraft, setCsvDraft] = useState(SAMPLE_CSV);
+  const [newSection, setNewSection] = useState('');
+  const [csvDraft, setCsvDraft] = useState('');
   const [pickedFile, setPickedFile] =
     useState<PickedSpreadsheetResult | null>(null);
   const [pickingFile, setPickingFile] = useState(false);
@@ -220,6 +218,10 @@ export const StudentsScreen: React.FC = () => {
           <Pressable
             onPress={() => {
               setAddMode('single');
+              setNewName('');
+              setNewStudentId('');
+              setNewSection(sectionLabels[0] ?? '');
+              setCsvDraft('');
               setPickedFile(null);
               setAddModalOpen(true);
             }}>
@@ -312,13 +314,13 @@ export const StudentsScreen: React.FC = () => {
               label="Full name"
               value={newName}
               onChangeText={setNewName}
-              placeholder="Marco Santos"
+              placeholder="e.g. Marco Santos"
             />
             <MinimalField
               label="Student ID / LRN (optional)"
               value={newStudentId}
               onChangeText={setNewStudentId}
-              placeholder="Leave blank to auto-generate (e.g. 2026-0007)"
+              placeholder="e.g. 2026-0007 (auto if blank)"
               autoCapitalize="characters"
             />
             <View style={styles.group}>
@@ -392,6 +394,7 @@ export const StudentsScreen: React.FC = () => {
                 label="Or paste CSV lines (Full Name, Section)"
                 value={csvDraft}
                 onChangeText={setCsvDraft}
+                placeholder={CSV_EXAMPLE_PLACEHOLDER}
                 multiline
                 style={styles.csvArea}
               />
