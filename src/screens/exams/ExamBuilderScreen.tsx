@@ -323,10 +323,14 @@ export const ExamBuilderScreen: React.FC = () => {
           <View style={styles.questionList}>
             {questions.map((q, qIdx) => {
               const isEssay = q.kind === 'essay';
+              const isMenuOpen = menuOpenIndex === qIdx;
               return (
                 <View
                   key={`${q.num}-${q.text.slice(0, 12)}`}
-                  style={styles.questionCard}>
+                  style={[
+                    styles.questionCard,
+                    isMenuOpen && styles.questionCardMenuOpen,
+                  ]}>
                   <View style={styles.questionHeader}>
                     <Pressable
                       onPress={() => openEditModal(qIdx)}
@@ -367,11 +371,14 @@ export const ExamBuilderScreen: React.FC = () => {
                     </View>
                   </View>
 
-                  {menuOpenIndex === qIdx ? (
+                  {isMenuOpen ? (
                     <View style={styles.questionActionMenu}>
                       <Pressable
                         onPress={() => openEditModal(qIdx)}
-                        style={styles.questionMenuItem}>
+                        style={({pressed}) => [
+                          styles.questionMenuItem,
+                          pressed && styles.questionMenuItemPressed,
+                        ]}>
                         <Text style={styles.questionMenuText}>
                           Edit question
                         </Text>
@@ -379,7 +386,10 @@ export const ExamBuilderScreen: React.FC = () => {
                       <View style={styles.questionMenuDivider} />
                       <Pressable
                         onPress={() => confirmDeleteQuestionAt(qIdx)}
-                        style={styles.questionMenuItem}>
+                        style={({pressed}) => [
+                          styles.questionMenuItem,
+                          pressed && styles.questionMenuItemPressed,
+                        ]}>
                         <Text style={styles.questionMenuDeleteText}>
                           Delete question
                         </Text>
@@ -406,9 +416,10 @@ export const ExamBuilderScreen: React.FC = () => {
                         return (
                           <Pressable
                             key={letter}
-                            onPress={() =>
-                              service.setQuestionAnswer(qIdx, letter)
-                            }
+                            onPress={() => {
+                              setMenuOpenIndex(null);
+                              service.setQuestionAnswer(qIdx, letter);
+                            }}
                             style={[
                               styles.choicePill,
                               isAnswer
@@ -755,12 +766,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   questionList: {
-    paddingBottom: 12,
+    paddingBottom: 64,
   },
   questionCard: {
+    position: 'relative',
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: Colors.hairlineLight,
+    overflow: 'visible',
+  },
+  questionCardMenuOpen: {
+    zIndex: 40,
+    elevation: 12,
   },
   questionHeader: {
     flexDirection: 'row',
@@ -787,18 +804,28 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   questionActionMenu: {
-    marginTop: 8,
-    alignSelf: 'flex-end',
+    position: 'absolute',
+    top: 44,
+    right: 0,
+    zIndex: 60,
+    elevation: 18,
     backgroundColor: Colors.surfaceWhite,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: Colors.hairlineLight,
-    minWidth: 152,
+    minWidth: 156,
     overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.16,
+    shadowRadius: 16,
   },
   questionMenuItem: {
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 11,
+  },
+  questionMenuItemPressed: {
+    backgroundColor: Colors.surfaceMuted,
   },
   questionMenuDivider: {
     height: 1,
