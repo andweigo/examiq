@@ -18,6 +18,8 @@ Desktop.ini
 *.jks
 *.keystore
 !debug.keystore
+keystore.properties
+releases/
 *.p8
 *.p12
 *.key
