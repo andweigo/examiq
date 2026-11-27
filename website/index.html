@@ -74,26 +74,44 @@
     /* Offset anchor scroll for sticky header */
     section[id] { scroll-margin-top: 72px; }
 
-    /* Flagship Phone Showcase Frame for Dashboard Display */
+    /* Flagship Phone Showcase Frame for Ultra-HD Vector Dashboard Display */
     .phone-display-bezel {
       width: 100%;
-      max-width: min(335px, 88vw);
-      border-radius: 36px;
-      padding: 6px;
+      max-width: min(344px, 92vw);
+      border-radius: 38px;
+      padding: 7px;
       background: #111111;
       box-shadow: 0 24px 60px rgba(17, 17, 17, 0.16), 0 4px 16px rgba(17, 17, 17, 0.08);
       border: 1px solid #2A2A2A;
     }
     @media (min-width: 1024px) {
       .phone-display-bezel {
-        max-width: 345px;
+        max-width: 354px;
       }
     }
-    .phone-display-screen {
-      width: 100%;
-      height: auto;
-      display: block;
-      border-radius: 30px;
+    .phone-display-inner {
+      background: #F5F5F2;
+      color: #111111;
+      border-radius: 31px;
+      padding: 16px 16px 14px;
+    }
+    .phone-notched {
+      position: relative;
+      border-radius: 22px;
+      padding: 18px 16px 15px;
+      overflow: hidden;
+    }
+    .phone-notched::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 54px;
+      height: 9px;
+      background: #F5F5F2;
+      border-bottom-left-radius: 9px;
+      border-bottom-right-radius: 9px;
     }
 
     /* Fluid Owl SVG wrapper */
@@ -208,6 +226,7 @@
        ============================================================ */
     const state = {
       activeSection: 'overview',
+      heroTab: 'to-scan',
       demoAligned: true,
       demoTiles: [
         { num: 1, label: 'A', key: 'A', type: 'correct' },
@@ -454,6 +473,164 @@
     }
 
     /* ============================================================
+       ULTRA-HD VECTOR DASHBOARD PHONE DISPLAY (EXACT APP SCREEN)
+       ============================================================ */
+    function renderHeroPhoneDashboard() {
+      const isScan = state.heroTab === 'to-scan';
+      const cards = isScan
+        ? [
+            { bg: '#958BFF', arrowBg: 'rgba(255,255,255,0.28)', sub: 'Grade 10 Rizal · Quarterly', title: 'Mathematics', meta: 'Nov 24', count: '38 / 40', isCalendar: true },
+            { bg: '#C6F453', arrowBg: 'rgba(255,255,255,0.34)', sub: 'Grade 10 Rizal · Quiz 3', title: 'Science', meta: 'Nov 20', count: '40 / 40', isCalendar: true }
+          ]
+        : [
+            { bg: '#F67D56', arrowBg: 'rgba(255,255,255,0.28)', sub: 'Grade 10 Rizal · Quarterly', title: 'Mathematics', meta: '2 flagged', count: '38 / 40', isCalendar: false },
+            { bg: '#6BD4E6', arrowBg: 'rgba(255,255,255,0.32)', sub: 'Grade 10 Bonifacio · Unit 2', title: 'English', meta: '1 flagged', count: '39 / 40', isCalendar: false }
+          ];
+
+      return `
+        <div class="phone-display-inner select-none">
+          <!-- Top Bar -->
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-[0_1px_2px_rgba(17,17,17,0.04)]">
+              <svg class="w-4 h-4 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="3.5"/>
+                <path d="M5.5 19.5c1.5-3.2 4-4.5 6.5-4.5s5 1.3 6.5 4.5"/>
+              </svg>
+            </div>
+            <div class="w-9 h-9 rounded-full bg-white flex items-center justify-center relative shadow-[0_1px_2px_rgba(17,17,17,0.04)]">
+              <svg class="w-4 h-4 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8a6 6 0 10-12 0c0 7-3 8.5-3 8.5h18s-3-1.5-3-8.5"/>
+                <path d="M13.7 21a2 2 0 01-3.4 0"/>
+              </svg>
+              <span class="w-2 h-2 rounded-full bg-[#F67D56] absolute top-2 right-2"></span>
+            </div>
+          </div>
+
+          <!-- Display Heading + HD 1024x1024 Owl Mascot -->
+          <div class="flex items-center justify-between gap-2 mb-4">
+            <div class="text-[24px] leading-[1.12] tracking-[-0.03em] text-[#111111]">
+              <span class="block font-light">Pick the next</span>
+              <span class="block font-bold">paper to check</span>
+            </div>
+            <img
+              src="./assets/owl-writing.png"
+              alt="ExamIQ Owl Mascot"
+              class="w-[62px] h-[62px] object-contain shrink-0"
+              loading="eager"
+              decoding="async"
+            />
+          </div>
+
+          <!-- Segmented Toggle -->
+          <div class="grid grid-cols-2 bg-[#EAEAE5] p-1 rounded-full mb-4">
+            <button type="button" onclick="setHeroTab('to-scan')"
+              class="py-2 rounded-full text-[11px] font-semibold cursor-pointer transition-colors ${isScan ? 'bg-[#111111] text-white' : 'text-[#4A4A45] hover:text-[#111111]'}">
+              To scan
+            </button>
+            <button type="button" onclick="setHeroTab('needs-review')"
+              class="py-2 rounded-full text-[11px] font-semibold cursor-pointer transition-colors ${!isScan ? 'bg-[#111111] text-white' : 'text-[#4A4A45] hover:text-[#111111]'}">
+              Needs review
+            </button>
+          </div>
+
+          <!-- Notched Exam Cards -->
+          <div class="space-y-3 mb-4">
+            ${cards.map(c => `
+              <div class="phone-notched" style="background:${c.bg}">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="text-[10px] font-medium text-[#111111]/75 truncate">${c.sub}</div>
+                    <div class="text-[18px] font-bold tracking-[-0.02em] text-[#111111] mt-0.5 leading-tight">${c.title}</div>
+                  </div>
+                  <span class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style="background:${c.arrowBg}">
+                    <svg class="w-3.5 h-3.5 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="7" y1="17" x2="17" y2="7"/><polyline points="8 7 17 7 17 16"/>
+                    </svg>
+                  </span>
+                </div>
+                <div class="flex items-center justify-between mt-6 text-[11px] text-[#111111]">
+                  <span class="inline-flex items-center gap-1.5 font-medium opacity-85">
+                    ${c.isCalendar
+                      ? '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+                      : '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'}
+                    ${c.meta}
+                  </span>
+                  <span class="font-bold">${c.count}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Class Passing Rate Header -->
+          <div class="flex items-center justify-between mb-2.5 px-0.5">
+            <span class="text-[11.5px] font-bold text-[#111111]">Class passing rate</span>
+            <button type="button" onclick="scrollToSection('alignment')" class="text-[10.5px] font-medium text-[#6E6E68] hover:text-[#111111] cursor-pointer bg-transparent border-0 p-0">View all →</button>
+          </div>
+
+          <!-- Dark Overall Passing Card -->
+          <div class="phone-notched bg-[#111111] text-white mb-2.5">
+            <div class="text-[10px] text-[#A1A19A]">Overall passing (≥75%)</div>
+            <div class="flex items-end justify-between gap-2 mt-1.5">
+              <span class="text-[26px] font-bold leading-none tracking-[-0.03em]">84%</span>
+              <span class="text-[10.5px] font-bold text-[#C6F453]">99 / 118 passed</span>
+            </div>
+          </div>
+
+          <!-- Subject Passing Breakdown -->
+          <div class="px-0.5 mb-3.5">
+            <div class="flex items-center justify-between py-2 border-b border-[#E4E4DE] text-[11px]">
+              <span class="inline-flex items-center gap-2 font-semibold text-[#111111]">
+                <span class="w-2 h-2 rounded-full bg-[#958BFF]"></span>Mathematics
+              </span>
+              <span class="font-bold text-[#111111]">78%</span>
+            </div>
+            <div class="flex items-center justify-between py-2 text-[11px]">
+              <span class="inline-flex items-center gap-2 font-semibold text-[#111111]">
+                <span class="w-2 h-2 rounded-full bg-[#C6F453]"></span>Science
+              </span>
+              <span class="font-bold text-[#111111]">92%</span>
+            </div>
+          </div>
+
+          <!-- Floating Bottom Navigation Pill -->
+          <div class="bg-[#111111] rounded-full p-1.5 flex items-center justify-between">
+            <span class="w-9 h-9 rounded-full bg-[#C6F453] flex items-center justify-center text-[#111111]">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9.5 20v-6h5v6"/>
+              </svg>
+            </span>
+            <span class="w-9 h-9 rounded-full flex items-center justify-center text-[#D4D4CE]">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="3.5" width="14" height="17" rx="2.5"/><line x1="9" y1="8.5" x2="15" y2="8.5"/><line x1="9" y1="12.5" x2="15" y2="12.5"/><line x1="9" y1="16.5" x2="13" y2="16.5"/>
+              </svg>
+            </span>
+            <span class="w-9 h-9 rounded-full flex items-center justify-center text-[#D4D4CE]">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 8V5.5A1.5 1.5 0 015.5 4H8"/><path d="M16 4h2.5A1.5 1.5 0 0120 5.5V8"/><path d="M20 16v2.5a1.5 1.5 0 01-1.5 1.5H16"/><path d="M8 20H5.5A1.5 1.5 0 014 18.5V16"/><rect x="9" y="9" width="6" height="6" rx="1"/>
+              </svg>
+            </span>
+            <span class="w-9 h-9 rounded-full flex items-center justify-center text-[#D4D4CE]">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="7" y1="18" x2="7" y2="13"/><line x1="12" y1="18" x2="12" y2="8"/><line x1="17" y1="18" x2="17" y2="11"/>
+              </svg>
+            </span>
+            <span class="w-9 h-9 rounded-full flex items-center justify-center text-[#D4D4CE]">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8.5" r="3.2"/><path d="M6 19c1.3-2.9 3.6-4.2 6-4.2s4.7 1.3 6 4.2"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+      `;
+    }
+
+    function setHeroTab(tab) {
+      state.heroTab = tab;
+      const el = document.getElementById('hero-phone-preview');
+      if (el) el.innerHTML = renderHeroPhoneDashboard();
+    }
+
+    /* ============================================================
        SECTION 1: OVERVIEW (HERO + DASHBOARD DISPLAY + 4 PILLARS)
        ============================================================ */
     function renderOverviewSection() {
@@ -502,17 +679,11 @@
               </div>
             </div>
 
-            <!-- Right Authentic Dashboard Screen Display -->
+            <!-- Right Ultra-HD Crisp Dashboard Screen Display -->
             <div class="lg:col-span-5 flex justify-center lg:justify-end">
-              <figure class="phone-display-bezel m-0">
-                <img
-                  src="./assets/dashboard-preview.png"
-                  alt="ExamIQ mobile dashboard showing Mathematics and Science notched exam cards, class passing rate summary, and offline navigation bar"
-                  class="phone-display-screen"
-                  loading="eager"
-                  decoding="async"
-                />
-              </figure>
+              <div id="hero-phone-preview" class="phone-display-bezel">
+                ${renderHeroPhoneDashboard()}
+              </div>
             </div>
           </div>
 
