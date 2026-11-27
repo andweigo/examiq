@@ -2,8 +2,9 @@ services:
   - type: web
     name: examiq-website
     runtime: static
+    rootDir: website
     buildCommand: ""
-    staticPublishPath: ./website
+    staticPublishPath: .
     buildFilter:
       paths:
         - website/**
