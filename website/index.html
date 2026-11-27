@@ -240,7 +240,7 @@
         { num: 1, mark: 'A', key: 'A', type: 'correct', caption: 'Correct' },
         { num: 2, mark: 'B', key: 'C', type: 'wrong', caption: 'Key: C' },
         { num: 3, mark: 'B', key: 'B', type: 'correct', caption: 'Correct' },
-        { num: 4, mark: '—', key: 'A', type: 'blank', caption: 'Blank' },
+        { num: 4, mark: 'Blank', key: 'A', type: 'blank', caption: 'Key: A' },
         { num: 5, mark: 'A,C', key: 'C', type: 'flagged', caption: 'Double' },
         { num: 6, mark: 'D', key: 'D', type: 'correct', caption: 'Correct' },
         { num: 7, mark: 'A', key: 'A', type: 'correct', caption: 'Correct' },
@@ -817,26 +817,21 @@
                 Juan Dela Cruz <span>${state.demoScore}</span> <span class="font-normal text-[#6E6E68]">/ 50</span>
               </div>
 
-              <!-- 4-State Legend (Matches Mobile ReviewScreen) -->
+              <!-- 4-State Legend (Color-only indicators matching Mobile ReviewScreen) -->
               <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] font-semibold text-[#4A4A45] mb-4">
-                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#C6F453] border border-[#111111]/20"></span>✓ Correct</span>
-                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#F67D56]"></span>✕ Wrong</span>
-                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#958BFF]"></span>! Needs check</span>
-                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#25262B]"></span>— Blank</span>
+                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#C6F453] border border-[#111111]/20"></span>Correct</span>
+                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#F67D56]"></span>Wrong</span>
+                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#958BFF]"></span>Flagged</span>
+                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#25262B]"></span>Blank</span>
               </div>
 
               <div class="grid grid-cols-2 min-[420px]:grid-cols-4 gap-2 sm:gap-2.5 mb-5 sm:mb-6">
                 ${state.demoTiles.map((t, i) => {
-                  const glyph = t.type === 'correct' ? '✓' : t.type === 'wrong' ? '✕' : t.type === 'blank' ? '—' : '!';
-                  const badgeBg = t.type === 'blank' ? 'bg-white/15 text-white' : 'bg-[#111111]/12 text-[#111111]';
                   const captionColor = t.type === 'blank' ? 'text-white/75' : 'text-[#111111]/75';
                   return `
                   <button onclick="overrideDemoTile(${i})"
                     class="rounded-2xl p-3 text-left min-h-[84px] sm:min-h-[88px] flex flex-col justify-between cursor-pointer transition-transform active:scale-95 ${tileColor(t)}">
-                    <div class="flex items-center justify-between w-full">
-                      <span class="text-[11px] font-bold opacity-80">#${t.num}</span>
-                      <span class="w-5 h-5 rounded-full text-[10px] font-extrabold flex items-center justify-center ${badgeBg}">${glyph}</span>
-                    </div>
+                    <span class="text-[11px] font-bold opacity-80">#${t.num}</span>
                     <div class="text-lg font-extrabold leading-none tracking-tight my-1">${t.mark}</div>
                     <span class="text-[10px] font-semibold ${captionColor}">${t.caption}</span>
                   </button>`;
@@ -882,7 +877,7 @@
         { num: 1, mark: 'A', key: 'A', type: 'correct', caption: 'Correct' },
         { num: 2, mark: 'B', key: 'C', type: 'wrong', caption: 'Key: C' },
         { num: 3, mark: 'B', key: 'B', type: 'correct', caption: 'Correct' },
-        { num: 4, mark: '—', key: 'A', type: 'blank', caption: 'Blank' },
+        { num: 4, mark: 'Blank', key: 'A', type: 'blank', caption: 'Key: A' },
         { num: 5, mark: 'A,C', key: 'C', type: 'flagged', caption: 'Double' },
         { num: 6, mark: 'D', key: 'D', type: 'correct', caption: 'Correct' },
         { num: 7, mark: 'A', key: 'A', type: 'correct', caption: 'Correct' },

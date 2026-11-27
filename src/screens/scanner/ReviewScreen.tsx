@@ -87,33 +87,29 @@ function getTileColors(type: ReviewTileView['type']): {
 }
 
 function formatTileDisplay(tile: ReviewTileView): {
-  statusGlyph: string;
   studentMark: string;
   subCaption: string;
 } {
   if (tile.type === 'correct') {
     return {
-      statusGlyph: '✓',
       studentMark: tile.detected || tile.key,
       subCaption: 'Correct',
     };
   }
   if (tile.type === 'wrong') {
-    const cleanMark = tile.detected.replace(/\s*\(.*?\)/g, '').trim() || '—';
+    const cleanMark = tile.detected.replace(/\s*\(.*?\)/g, '').trim() || 'Blank';
     return {
-      statusGlyph: '✕',
       studentMark: cleanMark,
       subCaption: `Key: ${tile.key}`,
     };
   }
   if (tile.type === 'blank') {
     return {
-      statusGlyph: '—',
-      studentMark: '—',
+      studentMark: 'Blank',
       subCaption: `Key: ${tile.key}`,
     };
   }
-  const cleanMark = tile.detected.replace(/\s*\(.*?\)/g, '').trim() || '!';
+  const cleanMark = tile.detected.replace(/\s*\(.*?\)/g, '').trim() || 'Check';
   const reasonTag =
     tile.flagReason === 'half_shaded'
       ? 'Half'
@@ -123,7 +119,6 @@ function formatTileDisplay(tile: ReviewTileView): {
       ? 'Double'
       : 'Check';
   return {
-    statusGlyph: '!',
     studentMark: cleanMark,
     subCaption: reasonTag,
   };
@@ -351,14 +346,9 @@ export const ReviewScreen: React.FC = () => {
                     {backgroundColor: palette.bg, width: tileWidth},
                     pressed && styles.tilePressed,
                   ]}>
-                  <View style={styles.tileTopRow}>
-                    <Text style={[styles.tileNum, {color: palette.text}]}>
-                      #{tile.num}
-                    </Text>
-                    <Text style={[styles.tileGlyph, {color: palette.text}]}>
-                      {view.statusGlyph}
-                    </Text>
-                  </View>
+                  <Text style={[styles.tileNum, {color: palette.text}]}>
+                    #{tile.num}
+                  </Text>
                   <Text
                     numberOfLines={1}
                     adjustsFontSizeToFit
@@ -851,19 +841,10 @@ const styles = StyleSheet.create({
     opacity: 0.85,
     transform: [{scale: 0.97}],
   },
-  tileTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   tileNum: {
     fontSize: 10,
     fontWeight: '600',
     opacity: 0.78,
-  },
-  tileGlyph: {
-    fontSize: 10.5,
-    fontWeight: '800',
   },
   tileMark: {
     fontSize: 19,
