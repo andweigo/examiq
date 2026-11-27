@@ -1,9 +1,10 @@
-import React, {useCallback, useMemo} from 'react';
-import {Alert, BackHandler, Pressable, StyleSheet, Text, View} from 'react-native';
+import React, {useCallback, useMemo, useState} from 'react';
+import {BackHandler, Pressable, StyleSheet, Text, View} from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {
   BackHeader,
+  ConfirmDialog,
   DisplayHeading,
   FilterPills,
   OwlMascot,
@@ -35,31 +36,26 @@ export const ExamGeneratorScreen: React.FC = () => {
   const {qrCodec, pdfEngine} = useServices();
   const {showToast} = useToast();
 
+  const [exitDialogOpen, setExitDialogOpen] = useState(false);
+
   const paperSpec = PAPER_SIZE_MAP[selectedExam.paperSize ?? 'A4'];
 
   const confirmExitGenerator = useCallback(() => {
-    Alert.alert(
-      'Exit exam generator?',
-      'Are you sure you want to leave? Any unsaved progress will not be saved.',
-      [
-        {text: 'Stay', style: 'cancel'},
-        {
-          text: 'Leave',
-          style: 'destructive',
-          onPress: () => navigation.navigate(RootRoute.Exams),
-        },
-      ],
-    );
-  }, [navigation]);
+    setExitDialogOpen(true);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (exitDialogOpen) {
+          setExitDialogOpen(false);
+          return true;
+        }
         confirmExitGenerator();
         return true;
       });
       return () => sub.remove();
-    }, [confirmExitGenerator]),
+    }, [exitDialogOpen, confirmExitGenerator]),
   );
 
   const studentOptions = useMemo(() => {
@@ -327,6 +323,21 @@ export const ExamGeneratorScreen: React.FC = () => {
       />
         </>
       )}
+
+      <ConfirmDialog
+        visible={exitDialogOpen}
+        badge="Unsaved progress"
+        title="Exit exam generator?"
+        message="Are you sure you want to leave? Any unsaved progress will not be saved."
+        tone="destructive"
+        cancelLabel="Stay"
+        confirmLabel="Leave"
+        onCancel={() => setExitDialogOpen(false)}
+        onConfirm={() => {
+          setExitDialogOpen(false);
+          navigation.navigate(RootRoute.Exams);
+        }}
+      />
     </ScreenLayout>
   );
 };

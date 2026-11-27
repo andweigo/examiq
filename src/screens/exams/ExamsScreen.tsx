@@ -1,8 +1,9 @@
 import React, {useMemo, useState} from 'react';
-import {Alert, Pressable, StyleSheet, Text, View} from 'react-native';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {
+  ConfirmDialog,
   DisplayHeading,
   FilterPills,
   FormModal,
@@ -40,6 +41,9 @@ export const ExamsScreen: React.FC = () => {
   const [itemCount, setItemCount] = useState<string>('16');
   const [paperSize, setPaperSize] = useState<PaperSize>('A4');
   const [dateLabel, setDateLabel] = useState('');
+  const [dialogMode, setDialogMode] = useState<
+    null | 'missingSubject' | 'missingClass' | 'discardChanges'
+  >(null);
 
   // Clean text-only subject pills (no count badges)
   const subjectFilterOptions = useMemo(() => {
@@ -65,31 +69,11 @@ export const ExamsScreen: React.FC = () => {
 
   const openCreateModal = () => {
     if (subjects.length === 0) {
-      Alert.alert(
-        'Register a subject first',
-        'You need at least one subject registered to your account before creating an exam.',
-        [
-          {text: 'Cancel', style: 'cancel'},
-          {
-            text: 'Add subject',
-            onPress: () => navigation.navigate(RootRoute.Subjects),
-          },
-        ],
-      );
+      setDialogMode('missingSubject');
       return;
     }
     if (classes.length === 0) {
-      Alert.alert(
-        'Add a class section first',
-        'Add at least one class & section before creating an exam.',
-        [
-          {text: 'Cancel', style: 'cancel'},
-          {
-            text: 'Add class',
-            onPress: () => navigation.navigate(RootRoute.Classes),
-          },
-        ],
-      );
+      setDialogMode('missingClass');
       return;
     }
     const matchingFilterSubject = subjects.find(
@@ -135,18 +119,7 @@ export const ExamsScreen: React.FC = () => {
       setModalOpen(false);
       return;
     }
-    Alert.alert(
-      'Discard changes?',
-      'Are you sure you want to exit? Unsaved progress will not be saved.',
-      [
-        {text: 'Stay', style: 'cancel'},
-        {
-          text: 'Discard',
-          style: 'destructive',
-          onPress: () => setModalOpen(false),
-        },
-      ],
-    );
+    setDialogMode('discardChanges');
   };
 
   const handleSaveExam = () => {
@@ -393,6 +366,51 @@ export const ExamsScreen: React.FC = () => {
           />
         </View>
       </FormModal>
+
+      <ConfirmDialog
+        visible={dialogMode === 'missingSubject'}
+        badge="Subject required"
+        title="Register a subject first"
+        message="You need at least one subject registered to your account before creating an exam."
+        tone="info"
+        cancelLabel="Cancel"
+        confirmLabel="Add subject"
+        onCancel={() => setDialogMode(null)}
+        onConfirm={() => {
+          setDialogMode(null);
+          navigation.navigate(RootRoute.Subjects);
+        }}
+      />
+
+      <ConfirmDialog
+        visible={dialogMode === 'missingClass'}
+        badge="Class required"
+        title="Add a class section first"
+        message="Add at least one class & section before creating an exam."
+        tone="info"
+        cancelLabel="Cancel"
+        confirmLabel="Add class"
+        onCancel={() => setDialogMode(null)}
+        onConfirm={() => {
+          setDialogMode(null);
+          navigation.navigate(RootRoute.Classes);
+        }}
+      />
+
+      <ConfirmDialog
+        visible={dialogMode === 'discardChanges'}
+        badge="Unsaved changes"
+        title="Discard changes?"
+        message="Are you sure you want to exit? Unsaved progress will not be saved."
+        tone="destructive"
+        cancelLabel="Stay"
+        confirmLabel="Discard"
+        onCancel={() => setDialogMode(null)}
+        onConfirm={() => {
+          setDialogMode(null);
+          setModalOpen(false);
+        }}
+      />
     </ScreenLayout>
   );
 };

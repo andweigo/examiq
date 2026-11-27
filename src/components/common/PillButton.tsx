@@ -6,6 +6,7 @@ import {Radii} from '@theme/spacing';
 export type PillButtonVariant =
   | 'dark'
   | 'lime'
+  | 'coral'
   | 'muted'
   | 'darkSurface'
   | 'outline';
@@ -24,6 +25,7 @@ const VARIANT_STYLES: Record<
 > = {
   dark: {bg: Colors.inkPrimary, text: Colors.surfaceWhite},
   lime: {bg: Colors.lime, text: Colors.inkPrimary},
+  coral: {bg: Colors.coral, text: Colors.inkPrimary},
   muted: {bg: Colors.surfaceMuted, text: Colors.inkPrimary},
   darkSurface: {bg: Colors.surfaceDarkElevated, text: Colors.surfaceWhite},
   outline: {
@@ -61,7 +63,7 @@ export const PillButton: React.FC<PillButtonProps> = ({
         minimumFontScale={0.82}
         style={[
           styles.label,
-          variant === 'lime' && styles.boldLabel,
+          (variant === 'lime' || variant === 'coral') && styles.boldLabel,
           {color: palette.text},
         ]}>
         {label}

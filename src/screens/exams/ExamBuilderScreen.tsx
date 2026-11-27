@@ -1,6 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {
-  Alert,
   BackHandler,
   Pressable,
   ScrollView,
@@ -12,6 +11,7 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {
   BackHeader,
+  ConfirmDialog,
   DisplayHeading,
   FilterPills,
   FormModal,
@@ -63,6 +63,10 @@ export const ExamBuilderScreen: React.FC = () => {
 
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importText, setImportText] = useState('');
+  const [exitDialogOpen, setExitDialogOpen] = useState(false);
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(
+    null,
+  );
 
   // Auto-populate editable items if an existing exam has an answer key but no question entries yet
   useEffect(() => {
@@ -76,23 +80,21 @@ export const ExamBuilderScreen: React.FC = () => {
   }, [selectedExam.id, answerKey.length, mcqQuestions.length, service]);
 
   const confirmExitBuilder = useCallback(() => {
-    Alert.alert(
-      'Exit exam editor?',
-      'Are you sure you want to leave? Unsaved progress will not be saved.',
-      [
-        {text: 'Stay', style: 'cancel'},
-        {
-          text: 'Leave',
-          style: 'destructive',
-          onPress: () => navigation.navigate(RootRoute.Exams),
-        },
-      ],
-    );
-  }, [navigation]);
+    setMenuOpenIndex(null);
+    setExitDialogOpen(true);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (pendingDeleteIndex !== null) {
+          setPendingDeleteIndex(null);
+          return true;
+        }
+        if (exitDialogOpen) {
+          setExitDialogOpen(false);
+          return true;
+        }
         if (questionModalOpen) {
           setQuestionModalOpen(false);
           return true;
@@ -109,7 +111,14 @@ export const ExamBuilderScreen: React.FC = () => {
         return true;
       });
       return () => sub.remove();
-    }, [questionModalOpen, importModalOpen, menuOpenIndex, confirmExitBuilder]),
+    }, [
+      pendingDeleteIndex,
+      exitDialogOpen,
+      questionModalOpen,
+      importModalOpen,
+      menuOpenIndex,
+      confirmExitBuilder,
+    ]),
   );
 
   const openAddModal = () => {
@@ -148,21 +157,7 @@ export const ExamBuilderScreen: React.FC = () => {
 
   const confirmDeleteQuestionAt = (idx: number) => {
     setMenuOpenIndex(null);
-    Alert.alert(
-      `Delete Question #${idx + 1}?`,
-      'This removes the question from the exam and updates the answer key.',
-      [
-        {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            service.deleteQuestion(idx);
-            showToast(`Deleted Q#${idx + 1}`);
-          },
-        },
-      ],
-    );
+    setPendingDeleteIndex(idx);
   };
 
   const handleSaveQuestion = () => {
@@ -638,6 +633,44 @@ export const ExamBuilderScreen: React.FC = () => {
           style={styles.importArea}
         />
       </FormModal>
+
+      <ConfirmDialog
+        visible={exitDialogOpen}
+        badge="Unsaved progress"
+        title="Exit exam editor?"
+        message="Are you sure you want to leave? Unsaved progress will not be saved."
+        tone="destructive"
+        cancelLabel="Stay"
+        confirmLabel="Leave"
+        onCancel={() => setExitDialogOpen(false)}
+        onConfirm={() => {
+          setExitDialogOpen(false);
+          navigation.navigate(RootRoute.Exams);
+        }}
+      />
+
+      <ConfirmDialog
+        visible={pendingDeleteIndex !== null}
+        badge="Remove item"
+        title={
+          pendingDeleteIndex !== null
+            ? `Delete Question #${pendingDeleteIndex + 1}?`
+            : 'Delete question?'
+        }
+        message="This removes the question from the exam and updates the answer key."
+        tone="destructive"
+        cancelLabel="Cancel"
+        confirmLabel="Delete"
+        onCancel={() => setPendingDeleteIndex(null)}
+        onConfirm={() => {
+          if (pendingDeleteIndex !== null) {
+            const deletedIdx = pendingDeleteIndex;
+            setPendingDeleteIndex(null);
+            service.deleteQuestion(deletedIdx);
+            showToast(`Deleted Q#${deletedIdx + 1}`);
+          }
+        }}
+      />
     </ScreenLayout>
   );
 };

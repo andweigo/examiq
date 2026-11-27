@@ -3,6 +3,7 @@ export * from './common/NotchedCard';
 export * from './common/DisplayHeading';
 export * from './common/SegmentedControl';
 export * from './common/FilterPills';
+export * from './common/ConfirmDialog';
 export * from './common/FormModal';
 export * from './common/MinimalField';
 export * from './common/PillButton';
